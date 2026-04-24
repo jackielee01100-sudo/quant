@@ -1,0 +1,6 @@
+{
+  "name": "QuantLab",
+  "description": "퀀트 시나리오를 드래그 앤 드롭으로 주식 차트에 적용하여 분석하는 지능형 대시보드",
+  "requestFramePermissions": [],
+  "majorCapabilities": []
+}
