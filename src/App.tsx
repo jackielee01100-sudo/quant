@@ -240,115 +240,131 @@ const ScenarioItem = ({
   );
 };
 
-const TradeView = ({ stock, price }: { stock: Stock; price: number }) => {
+const TradeView = ({ stock, price, type }: { stock: Stock; price: number; type: 'domestic' | 'overseas' }) => {
   const [orderType, setOrderType] = useState<'buy' | 'sell'>('buy');
   const [amount, setAmount] = useState<string>('0');
   
   return (
-    <div className="grid grid-cols-12 gap-8 h-full">
-      {/* Order Book Section */}
-      <div className="col-span-4 bg-white border border-slate-200 rounded-[2.5rem] p-8 flex flex-col shadow-sm">
-        <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-6">Order Book</h3>
-        <div className="flex-1 space-y-2 overflow-y-auto custom-scrollbar pr-2">
-          {[...Array(8)].map((_, i) => (
-            <div key={`ask-${i}`} className="flex items-center justify-between py-1 px-3 bg-rose-50/30 rounded-lg group hover:bg-rose-50 transition-colors relative">
-              <span className="text-xs font-bold text-rose-500">{(price + (8-i) * 100).toLocaleString()}</span>
-              <span className="text-[10px] font-mono text-slate-400">{Math.floor(Math.random() * 5000)}</span>
-              <div className="absolute right-0 top-0 bottom-0 bg-rose-500/5 transition-all" style={{ width: `${Math.random() * 40}%` }} />
-            </div>
-          ))}
-          <div className="py-4 border-y border-slate-100 my-4 text-center">
-            <span className="text-xl font-black text-slate-900">{price.toLocaleString()}</span>
-            <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-1">Market Price</p>
+    <div className="flex-1 flex flex-col overflow-hidden">
+      {type === 'overseas' ? (
+        <div className="flex flex-col items-center justify-center h-full py-20 bg-white border border-slate-200 rounded-[3rem] shadow-sm animate-in fade-in duration-700">
+          <div className="w-24 h-24 bg-blue-50 rounded-full flex items-center justify-center mb-8">
+            <Zap className="w-10 h-10 text-blue-600 opacity-20" />
           </div>
-          {[...Array(8)].map((_, i) => (
-            <div key={`bid-${i}`} className="flex items-center justify-between py-1 px-3 bg-emerald-50/30 rounded-lg group hover:bg-emerald-50 transition-colors">
-              <span className="text-xs font-bold text-emerald-500">{(price - (i+1) * 100).toLocaleString()}</span>
-              <span className="text-[10px] font-mono text-slate-400">{Math.floor(Math.random() * 5000)}</span>
-            </div>
-          ))}
+          <h2 className="text-2xl font-black text-slate-900 mb-2">해외 주식 거래 준비 중...</h2>
+          <p className="text-slate-400 font-bold tracking-tight">곧 해외 주식 구매 서비스가 시작됩니다.</p>
         </div>
-      </div>
-
-      {/* Transaction Section */}
-      <div className="col-span-8 space-y-8 flex flex-col">
-        <div className="bg-white border border-slate-200 rounded-[2.5rem] p-10 shadow-sm flex-1">
-          <div className="flex gap-1 bg-slate-100 p-1.5 rounded-2xl mb-8 w-fit">
-            <button 
-              onClick={() => setOrderType('buy')}
-              className={cn(
-                "px-10 py-3 rounded-xl text-sm font-black tracking-widest uppercase transition-all",
-                orderType === 'buy' ? "bg-emerald-500 text-white shadow-xl shadow-emerald-200" : "text-slate-400 hover:text-slate-600"
-              )}
-            >
-              Buy
-            </button>
-            <button 
-              onClick={() => setOrderType('sell')}
-              className={cn(
-                "px-10 py-3 rounded-xl text-sm font-black tracking-widest uppercase transition-all",
-                orderType === 'sell' ? "bg-rose-500 text-white shadow-xl shadow-rose-200" : "text-slate-400 hover:text-slate-600"
-              )}
-            >
-              Sell
-            </button>
+      ) : (
+        <div className="grid grid-cols-12 gap-8 h-full">
+          {/* Order Book Section */}
+          <div className="col-span-4 bg-white border border-slate-200 rounded-[2.5rem] p-8 flex flex-col shadow-sm">
+            <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-6">Order Book</h3>
+            <div className="flex-1 space-y-2 overflow-y-auto custom-scrollbar pr-2">
+              {[...Array(8)].map((_, i) => (
+                <div key={`ask-${i}`} className="flex items-center justify-between py-1 px-3 bg-rose-50/30 rounded-lg group hover:bg-rose-50 transition-colors relative">
+                  <span className="text-xs font-bold text-rose-500">{(price + (8-i) * 100).toLocaleString()}</span>
+                  <span className="text-[10px] font-mono text-slate-400">{Math.floor(Math.random() * 5000)}</span>
+                  <div className="absolute right-0 top-0 bottom-0 bg-rose-500/5 transition-all" style={{ width: `${Math.random() * 40}%` }} />
+                </div>
+              ))}
+              <div className="py-4 border-y border-slate-100 my-4 text-center">
+                <span className="text-xl font-black text-slate-900">{price.toLocaleString()}</span>
+                <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-1">Market Price</p>
+              </div>
+              {[...Array(8)].map((_, i) => (
+                <div key={`bid-${i}`} className="flex items-center justify-between py-1 px-3 bg-emerald-50/30 rounded-lg group hover:bg-emerald-50 transition-colors">
+                  <span className="text-xs font-bold text-emerald-500">{(price - (i+1) * 100).toLocaleString()}</span>
+                  <span className="text-[10px] font-mono text-slate-400">{Math.floor(Math.random() * 5000)}</span>
+                </div>
+              ))}
+            </div>
           </div>
 
-          <div className="space-y-8 max-w-md">
-            <div>
-              <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3 block">Order Price (KRW)</label>
-              <input 
-                type="text" 
-                value={price.toLocaleString()} 
-                readOnly
-                className="w-full bg-slate-50 border border-slate-100 rounded-2xl py-5 px-6 text-2xl font-black text-slate-800 focus:outline-none"
-              />
-            </div>
-            <div>
-              <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3 block">Quantity</label>
-              <div className="relative">
-                <input 
-                  type="number" 
-                  value={amount} 
-                  onChange={(e) => setAmount(e.target.value)}
-                  placeholder="0"
-                  className="w-full bg-slate-50 border border-slate-100 rounded-2xl py-5 px-6 text-2xl font-black text-slate-800 focus:outline-none focus:ring-4 focus:ring-blue-500/5 focus:border-blue-500 transition-all"
-                />
-                <span className="absolute right-6 top-1/2 -translate-y-1/2 text-sm font-bold text-slate-400">주</span>
+          {/* Transaction Section */}
+          <div className="col-span-8 space-y-8 flex flex-col">
+            <div className="bg-white border border-slate-200 rounded-[2.5rem] p-10 shadow-sm flex-1">
+              <div className="flex gap-1 bg-slate-100 p-1.5 rounded-2xl mb-8 w-fit">
+                <button 
+                  onClick={() => setOrderType('buy')}
+                  className={cn(
+                    "px-10 py-3 rounded-xl text-sm font-black tracking-widest uppercase transition-all",
+                    orderType === 'buy' ? "bg-emerald-500 text-white shadow-xl shadow-emerald-200" : "text-slate-400 hover:text-slate-600"
+                  )}
+                >
+                  Buy
+                </button>
+                <button 
+                  onClick={() => setOrderType('sell')}
+                  className={cn(
+                    "px-10 py-3 rounded-xl text-sm font-black tracking-widest uppercase transition-all",
+                    orderType === 'sell' ? "bg-rose-500 text-white shadow-xl shadow-rose-200" : "text-slate-400 hover:text-slate-600"
+                  )}
+                >
+                  Sell
+                </button>
+              </div>
+
+              <div className="space-y-8 max-w-md">
+                <div>
+                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3 block">Order Price (KRW)</label>
+                  <input 
+                    type="text" 
+                    value={price.toLocaleString()} 
+                    readOnly
+                    className="w-full bg-slate-50 border border-slate-100 rounded-2xl py-5 px-6 text-2xl font-black text-slate-800 focus:outline-none"
+                  />
+                </div>
+                <div>
+                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3 block">Quantity</label>
+                  <div className="relative">
+                    <input 
+                      type="number" 
+                      value={amount} 
+                      onChange={(e) => setAmount(e.target.value)}
+                      placeholder="0"
+                      className="w-full bg-slate-50 border border-slate-100 rounded-2xl py-5 px-6 text-2xl font-black text-slate-800 focus:outline-none focus:ring-4 focus:ring-blue-500/5 focus:border-blue-500 transition-all"
+                    />
+                    <span className="absolute right-6 top-1/2 -translate-y-1/2 text-sm font-bold text-slate-400">주</span>
+                  </div>
+                </div>
+                
+                <div className="pt-4 border-t border-slate-100">
+                  <div className="flex justify-between items-center mb-6">
+                    <span className="text-sm font-bold text-slate-400">Estimated Total</span>
+                    <span className="text-2xl font-black text-slate-900">{(price * Number(amount)).toLocaleString()} KRW</span>
+                  </div>
+                  <button 
+                    className={cn(
+                      "w-full py-6 rounded-3xl text-sm font-black tracking-[0.2em] uppercase shadow-2xl transition-all active:scale-95",
+                      orderType === 'buy' ? "bg-emerald-500 text-white shadow-emerald-200 hover:bg-emerald-600" : "bg-rose-500 text-white shadow-rose-200 hover:bg-rose-600"
+                    )}
+                  >
+                    Place {orderType} Order
+                  </button>
+                </div>
               </div>
             </div>
-            
-            <div className="pt-4 border-t border-slate-100">
-              <div className="flex justify-between items-center mb-6">
-                <span className="text-sm font-bold text-slate-400">Estimated Total</span>
-                <span className="text-2xl font-black text-slate-900">{(price * Number(amount)).toLocaleString()} KRW</span>
+
+            <div className="bg-slate-900 border border-slate-800 rounded-[2rem] p-8 shadow-2xl">
+              <div className="flex items-center justify-between mb-4">
+                <h4 className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Available Balance</h4>
+                <div className="w-1.5 h-1.5 bg-emerald-500 rounded-full" />
               </div>
-              <button 
-                className={cn(
-                  "w-full py-6 rounded-3xl text-sm font-black tracking-[0.2em] uppercase shadow-2xl transition-all active:scale-95",
-                  orderType === 'buy' ? "bg-emerald-500 text-white shadow-emerald-200 hover:bg-emerald-600" : "bg-rose-500 text-white shadow-rose-200 hover:bg-rose-600"
-                )}
-              >
-                Place {orderType} Order
-              </button>
+              <p className="text-3xl font-black text-white tracking-tight">125,480,000 <span className="text-sm font-medium text-slate-500 ml-1">KRW</span></p>
             </div>
           </div>
         </div>
-
-        <div className="bg-slate-900 border border-slate-800 rounded-[2rem] p-8 shadow-2xl">
-          <div className="flex items-center justify-between mb-4">
-            <h4 className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Available Balance</h4>
-            <div className="w-1.5 h-1.5 bg-emerald-500 rounded-full" />
-          </div>
-          <p className="text-3xl font-black text-white tracking-tight">125,480,000 <span className="text-sm font-medium text-slate-500 ml-1">KRW</span></p>
-        </div>
-      </div>
+      )}
     </div>
   );
 };
 
 export default function App() {
   const [activeTab, setActiveTab] = useState<'quant' | 'trade' | 'assets'>('quant');
+  const [assetType, setAssetType] = useState<'domestic' | 'overseas'>('domestic');
+  const [tradeType, setTradeType] = useState<'domestic' | 'overseas'>('domestic');
+  const [isAssetHovered, setIsAssetHovered] = useState(false);
+  const [isTradeHovered, setIsTradeHovered] = useState(false);
   const [selectedStock, setSelectedStock] = useState<Stock>(STOCKS[0]);
   const [chartData, setChartData] = useState<StockData[]>([]);
   const [appliedScenarios, setAppliedScenarios] = useState<string[]>([]);
@@ -407,57 +423,6 @@ export default function App() {
 
   return (
     <div className="flex h-screen overflow-hidden bg-[var(--bg)] text-[var(--text-primary)] transition-colors duration-500">
-      {/* Sidebar: Only for Quant Tools */}
-      <aside className={cn(
-        "bg-white border-r border-slate-200 flex flex-col shadow-[4px_0_24px_rgba(0,0,0,0.02)] transition-all duration-500 ease-in-out",
-        activeTab === 'quant' ? "w-80 opacity-100" : "w-0 opacity-0 overflow-hidden border-0"
-      )}>
-        <div className="p-8 border-b border-slate-100 bg-white whitespace-nowrap">
-          <div className="flex items-center gap-3 mb-8">
-            <div className="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center shadow-lg shadow-blue-200">
-              <BarChart3 className="w-5 h-5 text-white" />
-            </div>
-            <h1 className="text-xl font-black tracking-tighter text-slate-900 italic">QUANT<span className="text-blue-600">LAB</span></h1>
-          </div>
-
-          <div className="flex items-center justify-between mb-2">
-            <h2 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">
-              Analysis Tools
-            </h2>
-          </div>
-        </div>
-
-        <div className="flex-1 overflow-y-auto px-6 py-6 custom-scrollbar bg-slate-50/50">
-          <div className="flex flex-col gap-2">
-            {SCENARIOS.map(s => (
-              <ScenarioItem 
-                key={s.id} 
-                scenario={s} 
-                onApply={toggleScenario}
-                isApplied={appliedScenarios.includes(s.id)}
-              />
-            ))}
-            <button className="mt-4 w-full p-4 border-2 border-dashed border-slate-200 rounded-2xl flex flex-col items-center justify-center gap-2 text-slate-400 hover:text-blue-600 hover:border-blue-200 hover:bg-blue-50/30 transition-all group">
-              <div className="w-10 h-10 rounded-full bg-white border border-slate-100 flex items-center justify-center shadow-sm group-hover:scale-110 transition-transform">
-                <Plus className="w-5 h-5" />
-              </div>
-              <span className="text-[10px] font-bold uppercase tracking-widest">시나리오 추가</span>
-            </button>
-          </div>
-        </div>
-
-        <div className="p-8 bg-white border-t border-slate-100">
-          <div className="bg-slate-50 border border-slate-100 rounded-2xl p-4 flex items-center gap-3">
-            <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-600">
-              <Info className="w-4 h-4" />
-            </div>
-            <p className="text-[11px] text-slate-500 leading-tight">
-              Drag & Drop signals directly into the chart workspace.
-            </p>
-          </div>
-        </div>
-      </aside>
-
       {/* Main Content */}
       <main className="flex-1 flex flex-col overflow-hidden">
         {/* TOP HEADER NAVIGATION */}
@@ -478,26 +443,119 @@ export default function App() {
               <Activity className="w-4 h-4" />
               퀀트 분석
             </button>
-            <button 
-              onClick={() => setActiveTab('trade')}
-              className={cn(
-                "flex items-center gap-2.5 px-6 py-2.5 rounded-xl text-xs font-black tracking-wider uppercase transition-all whitespace-nowrap",
-                activeTab === 'trade' ? "bg-white text-blue-600 shadow-xl shadow-slate-200" : "text-slate-400 hover:text-slate-600 hover:bg-white/50"
-              )}
+            <div 
+              className="relative"
+              onMouseEnter={() => setIsTradeHovered(true)}
+              onMouseLeave={() => setIsTradeHovered(false)}
             >
-              <Zap className="w-4 h-4" />
-              주식 구매
-            </button>
-            <button 
-              onClick={() => setActiveTab('assets')}
-              className={cn(
-                "flex items-center gap-2.5 px-6 py-2.5 rounded-xl text-xs font-black tracking-wider uppercase transition-all whitespace-nowrap",
-                activeTab === 'assets' ? "bg-white text-blue-600 shadow-xl shadow-slate-200" : "text-slate-400 hover:text-slate-600 hover:bg-white/50"
-              )}
+              <button 
+                onClick={() => setActiveTab('trade')}
+                className={cn(
+                  "flex items-center gap-2.5 px-6 py-2.5 rounded-xl text-xs font-black tracking-wider uppercase transition-all whitespace-nowrap h-full",
+                  activeTab === 'trade' ? "bg-white text-blue-600 shadow-xl shadow-slate-200" : "text-slate-400 hover:text-slate-600 hover:bg-white/50"
+                )}
+              >
+                <Zap className="w-4 h-4" />
+                주식 구매
+              </button>
+
+              <AnimatePresence>
+                {isTradeHovered && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                    className="absolute top-full left-0 mt-2 w-48 bg-white border border-slate-200 rounded-2xl shadow-2xl p-2 z-[100] overflow-hidden"
+                  >
+                    <button 
+                      onClick={() => {
+                        setActiveTab('trade');
+                        setTradeType('domestic');
+                        setIsTradeHovered(false);
+                      }}
+                      className={cn(
+                        "w-full flex items-center justify-between px-4 py-3 rounded-xl text-[11px] font-black uppercase tracking-widest transition-all",
+                        (activeTab === 'trade' && tradeType === 'domestic') ? "bg-blue-50 text-blue-600" : "text-slate-500 hover:bg-slate-50 hover:text-slate-900"
+                      )}
+                    >
+                      국내 주식
+                      <ChevronRight className="w-3 h-3 opacity-30" />
+                    </button>
+                    <button 
+                      onClick={() => {
+                        setActiveTab('trade');
+                        setTradeType('overseas');
+                        setIsTradeHovered(false);
+                      }}
+                      className={cn(
+                        "w-full flex items-center justify-between px-4 py-3 rounded-xl text-[11px] font-black uppercase tracking-widest transition-all",
+                        (activeTab === 'trade' && tradeType === 'overseas') ? "bg-blue-50 text-blue-600" : "text-slate-500 hover:bg-slate-50 hover:text-slate-900"
+                      )}
+                    >
+                      해외 주식
+                      <ChevronRight className="w-3 h-3 opacity-30" />
+                    </button>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+            
+            <div 
+              className="relative"
+              onMouseEnter={() => setIsAssetHovered(true)}
+              onMouseLeave={() => setIsAssetHovered(false)}
             >
-              <Wallet className="w-4 h-4" />
-              내 자산
-            </button>
+              <button 
+                onClick={() => setActiveTab('assets')}
+                className={cn(
+                  "flex items-center gap-2.5 px-6 py-2.5 rounded-xl text-xs font-black tracking-wider uppercase transition-all whitespace-nowrap h-full",
+                  activeTab === 'assets' ? "bg-white text-blue-600 shadow-xl shadow-slate-200" : "text-slate-400 hover:text-slate-600 hover:bg-white/50"
+                )}
+              >
+                <Wallet className="w-4 h-4" />
+                내 자산
+              </button>
+
+              <AnimatePresence>
+                {isAssetHovered && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                    className="absolute top-full left-0 mt-2 w-48 bg-white border border-slate-200 rounded-2xl shadow-2xl p-2 z-[100] overflow-hidden"
+                  >
+                    <button 
+                      onClick={() => {
+                        setActiveTab('assets');
+                        setAssetType('domestic');
+                        setIsAssetHovered(false);
+                      }}
+                      className={cn(
+                        "w-full flex items-center justify-between px-4 py-3 rounded-xl text-[11px] font-black uppercase tracking-widest transition-all",
+                        (activeTab === 'assets' && assetType === 'domestic') ? "bg-blue-50 text-blue-600" : "text-slate-500 hover:bg-slate-50 hover:text-slate-900"
+                      )}
+                    >
+                      국내 주식
+                      <ChevronRight className="w-3 h-3 opacity-30" />
+                    </button>
+                    <button 
+                      onClick={() => {
+                        setActiveTab('assets');
+                        setAssetType('overseas');
+                        setIsAssetHovered(false);
+                      }}
+                      className={cn(
+                        "w-full flex items-center justify-between px-4 py-3 rounded-xl text-[11px] font-black uppercase tracking-widest transition-all",
+                        (activeTab === 'assets' && assetType === 'overseas') ? "bg-blue-50 text-blue-600" : "text-slate-500 hover:bg-slate-50 hover:text-slate-900"
+                      )}
+                    >
+                      해외 주식
+                      <ChevronRight className="w-3 h-3 opacity-30" />
+                    </button>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
           </nav>
 
           <div className="flex items-center gap-6 ml-auto">
@@ -597,7 +655,9 @@ export default function App() {
         {/* Dashboard Content */}
         <div className="flex-1 p-10 overflow-y-auto custom-scrollbar bg-[#F8FAFC]">
           {activeTab === 'assets' ? (
-            <AssetView />
+            <AssetView type={assetType} />
+          ) : activeTab === 'trade' ? (
+            <TradeView stock={selectedStock} price={chartData[chartData.length - 1]?.price || 0} type={tradeType} />
           ) : (
             <>
               {/* Stock Info Bar */}
@@ -749,8 +809,8 @@ export default function App() {
 
                         {appliedScenarios.includes('ma-cross') && (
                           <>
-                            <Line type="monotone" dataKey="ma5" stroke="#F59E0B" strokeWidth={2} dot={false} strokeDasharray="10 5" />
-                            <Line type="monotone" dataKey="ma20" stroke="#8B5CF6" strokeWidth={2} dot={false} strokeDasharray="8 8" />
+                            <Line type="monotone" dataKey="ma5" stroke="#F59E0B" strokeWidth={2} dot={false} strokeDasharray="10 5" isAnimationActive={false} />
+                            <Line type="monotone" dataKey="ma20" stroke="#8B5CF6" strokeWidth={2} dot={false} strokeDasharray="8 8" isAnimationActive={false} />
                           </>
                         )}
 
@@ -797,9 +857,7 @@ export default function App() {
                     </div>
                   </div>
                 </div>
-              ) : (
-                <TradeView stock={selectedStock} price={chartData[chartData.length - 1]?.price || 0} />
-              )}
+              ) : null}
             </>
           )}
 
@@ -819,11 +877,70 @@ export default function App() {
           </footer>
         </div>
       </main>
+
+      {/* Sidebar: Now on the Right */}
+      <aside className={cn(
+        "bg-white border-l border-slate-200 flex flex-col shadow-[-4px_0_24px_rgba(0,0,0,0.02)] transition-all duration-500 ease-in-out",
+        activeTab === 'quant' ? "w-80 opacity-100" : "w-0 opacity-0 overflow-hidden border-0"
+      )}>
+        <div className="p-8 border-b border-slate-100 bg-white whitespace-nowrap">
+          <div className="flex items-center justify-between mb-2">
+            <h2 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">
+              Analysis Tools
+            </h2>
+          </div>
+        </div>
+
+        <div className="flex-1 overflow-y-auto px-6 py-6 custom-scrollbar bg-slate-50/50">
+          <div className="flex flex-col gap-2">
+            {SCENARIOS.map(s => (
+              <ScenarioItem 
+                key={s.id} 
+                scenario={s} 
+                onApply={toggleScenario}
+                isApplied={appliedScenarios.includes(s.id)}
+              />
+            ))}
+            <button className="mt-4 w-full p-4 border-2 border-dashed border-slate-200 rounded-2xl flex flex-col items-center justify-center gap-2 text-slate-400 hover:text-blue-600 hover:border-blue-200 hover:bg-blue-50/30 transition-all group">
+              <div className="w-10 h-10 rounded-full bg-white border border-slate-100 flex items-center justify-center shadow-sm group-hover:scale-110 transition-transform">
+                <Plus className="w-5 h-5" />
+              </div>
+              <span className="text-[10px] font-bold uppercase tracking-widest">시나리오 추가</span>
+            </button>
+          </div>
+        </div>
+
+        <div className="p-8 bg-white border-t border-slate-100">
+          <div className="bg-slate-50 border border-slate-100 rounded-2xl p-4 flex items-center gap-3">
+            <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-600">
+              <Info className="w-4 h-4" />
+            </div>
+            <p className="text-[11px] text-slate-500 leading-tight">
+              Drag & Drop signals directly into the chart workspace.
+            </p>
+          </div>
+        </div>
+      </aside>
     </div>
   );
 }
 
-const AssetView = () => {
+const AssetView = ({ type }: { type: 'domestic' | 'overseas' }) => {
+  if (type === 'overseas') {
+    return (
+      <div className="flex flex-col items-center justify-center h-full py-20 bg-white border border-slate-200 rounded-[3rem] shadow-sm animate-in fade-in duration-700">
+        <div className="w-24 h-24 bg-blue-50 rounded-full flex items-center justify-center mb-8">
+          <Wallet className="w-10 h-10 text-blue-600 opacity-20" />
+        </div>
+        <h2 className="text-2xl font-black text-slate-900 mb-2">해외 주식 내역이 없습니다</h2>
+        <p className="text-slate-400 font-bold tracking-tight">글로벌 시장 투자를 시작해보세요.</p>
+        <button className="mt-8 px-10 py-4 bg-slate-900 text-white rounded-2xl text-[10px] font-black tracking-widest uppercase hover:bg-blue-600 transition-all shadow-xl shadow-slate-200">
+          거래소 연결하기
+        </button>
+      </div>
+    );
+  }
+
   const assets = [
     { name: '삼성전자', code: '005930', q: 12, avgPrice: 68400, currPrice: 72100, profit: 5.4 },
     { name: 'SK하이닉스', code: '000660', q: 8, avgPrice: 172000, currPrice: 184500, profit: 7.2 },
