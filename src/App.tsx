@@ -21,7 +21,11 @@ import {
   ChevronRight,
   Info,
   RefreshCw,
-  Plus
+  Plus,
+  LogIn,
+  Wallet,
+  User,
+  Clock
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { clsx, type ClassValue } from 'clsx';
@@ -152,6 +156,40 @@ const generateMockData = (stockId: string): StockData[] => {
 };
 
 // --- Components ---
+
+const CountdownTimer = () => {
+  const [timeLeft, setTimeLeft] = useState(600); // 10 minutes in seconds
+
+  useEffect(() => {
+    const handleActivity = () => setTimeLeft(600);
+    window.addEventListener('mousemove', handleActivity);
+    window.addEventListener('keydown', handleActivity);
+    window.addEventListener('click', handleActivity);
+
+    const interval = setInterval(() => {
+      setTimeLeft((prev) => (prev > 0 ? prev - 1 : 0));
+    }, 1000);
+
+    return () => {
+      window.removeEventListener('mousemove', handleActivity);
+      window.removeEventListener('keydown', handleActivity);
+      window.removeEventListener('click', handleActivity);
+      clearInterval(interval);
+    };
+  }, []);
+
+  const minutes = Math.floor(timeLeft / 60);
+  const seconds = timeLeft % 60;
+
+  return (
+    <div className="flex items-center gap-2 px-4 py-2 bg-slate-100 rounded-xl border border-slate-200 shadow-inner">
+      <Clock className="w-3.5 h-3.5 text-blue-600 animate-pulse" />
+      <span className="text-[11px] font-black text-slate-700 font-mono tabular-nums tracking-wider">
+        {String(minutes).padStart(2, '0')}:{String(seconds).padStart(2, '0')}
+      </span>
+    </div>
+  );
+};
 
 const ScenarioItem = ({ 
   scenario, 
@@ -310,12 +348,13 @@ const TradeView = ({ stock, price }: { stock: Stock; price: number }) => {
 };
 
 export default function App() {
-  const [activeTab, setActiveTab] = useState<'quant' | 'trade'>('quant');
+  const [activeTab, setActiveTab] = useState<'quant' | 'trade' | 'assets'>('quant');
   const [selectedStock, setSelectedStock] = useState<Stock>(STOCKS[0]);
   const [chartData, setChartData] = useState<StockData[]>([]);
   const [appliedScenarios, setAppliedScenarios] = useState<string[]>([]);
   const [isOverDropZone, setIsOverDropZone] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
 
   useEffect(() => {
     setChartData(generateMockData(selectedStock.id));
@@ -367,104 +406,146 @@ export default function App() {
   };
 
   return (
-    <div className="flex h-screen overflow-hidden bg-[var(--bg)] text-[var(--text-primary)]">
-      {/* Sidebar */}
-      <aside className="w-80 bg-white border-r border-slate-200 flex flex-col shadow-[4px_0_24px_rgba(0,0,0,0.02)]">
-        <div className="p-8 border-b border-slate-100">
+    <div className="flex h-screen overflow-hidden bg-[var(--bg)] text-[var(--text-primary)] transition-colors duration-500">
+      {/* Sidebar: Only for Quant Tools */}
+      <aside className={cn(
+        "bg-white border-r border-slate-200 flex flex-col shadow-[4px_0_24px_rgba(0,0,0,0.02)] transition-all duration-500 ease-in-out",
+        activeTab === 'quant' ? "w-80 opacity-100" : "w-0 opacity-0 overflow-hidden border-0"
+      )}>
+        <div className="p-8 border-b border-slate-100 bg-white whitespace-nowrap">
           <div className="flex items-center gap-3 mb-8">
-            <div className="w-9 h-9 bg-slate-900 rounded-xl flex items-center justify-center shadow-lg shadow-slate-200">
+            <div className="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center shadow-lg shadow-blue-200">
               <BarChart3 className="w-5 h-5 text-white" />
             </div>
-            <h1 className="text-lg font-extrabold tracking-tight text-slate-800">QuantLab</h1>
+            <h1 className="text-xl font-black tracking-tighter text-slate-900 italic">QUANT<span className="text-blue-600">LAB</span></h1>
           </div>
 
-          <nav className="flex flex-col gap-1.5">
-            <button 
-              onClick={() => setActiveTab('quant')}
-              className={cn(
-                "flex items-center gap-3 px-4 py-3.5 rounded-xl text-sm font-bold transition-all",
-                activeTab === 'quant' ? "bg-slate-900 text-white shadow-xl shadow-slate-200" : "text-slate-400 hover:text-slate-600 hover:bg-slate-50"
-              )}
-            >
-              <Layers className="w-4 h-4" />
-              퀀트 분석
-            </button>
-            <button 
-              onClick={() => setActiveTab('trade')}
-              className={cn(
-                "flex items-center gap-3 px-4 py-3.5 rounded-xl text-sm font-bold transition-all",
-                activeTab === 'trade' ? "bg-slate-900 text-white shadow-xl shadow-slate-200" : "text-slate-400 hover:text-slate-600 hover:bg-slate-50"
-              )}
-            >
-              <Zap className="w-4 h-4" />
-              주식 구매
-            </button>
-          </nav>
+          <div className="flex items-center justify-between mb-2">
+            <h2 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">
+              Analysis Tools
+            </h2>
+          </div>
         </div>
 
-        <div className="flex-1 overflow-y-auto px-6 py-8 custom-scrollbar bg-slate-50/30">
-          {activeTab === 'quant' ? (
-            <>
-              <div className="flex items-center justify-between mb-4 px-2">
-                <h2 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">
-                  Quant Scenarios
-                </h2>
+        <div className="flex-1 overflow-y-auto px-6 py-6 custom-scrollbar bg-slate-50/50">
+          <div className="flex flex-col gap-2">
+            {SCENARIOS.map(s => (
+              <ScenarioItem 
+                key={s.id} 
+                scenario={s} 
+                onApply={toggleScenario}
+                isApplied={appliedScenarios.includes(s.id)}
+              />
+            ))}
+            <button className="mt-4 w-full p-4 border-2 border-dashed border-slate-200 rounded-2xl flex flex-col items-center justify-center gap-2 text-slate-400 hover:text-blue-600 hover:border-blue-200 hover:bg-blue-50/30 transition-all group">
+              <div className="w-10 h-10 rounded-full bg-white border border-slate-100 flex items-center justify-center shadow-sm group-hover:scale-110 transition-transform">
+                <Plus className="w-5 h-5" />
               </div>
-              {SCENARIOS.map(s => (
-                <ScenarioItem 
-                  key={s.id} 
-                  scenario={s} 
-                  onApply={toggleScenario}
-                  isApplied={appliedScenarios.includes(s.id)}
-                />
-              ))}
-            </>
-          ) : (
-            <>
-              <div className="flex items-center justify-between mb-4 px-2">
-                <h2 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">
-                  My Holdings
-                </h2>
-              </div>
-              {STOCKS.slice(0, 3).map(stock => (
-                <div key={stock.id} className="p-4 mb-3 border border-slate-200 bg-white rounded-xl shadow-sm flex justify-between items-center group hover:border-blue-400 transition-all cursor-pointer" onClick={() => setSelectedStock(stock)}>
-                  <div>
-                    <p className="text-sm font-bold text-slate-800">{stock.name}</p>
-                    <p className="text-[10px] text-slate-400 mt-0.5">14주 보유</p>
-                  </div>
-                  <div className="text-right">
-                    <p className="text-xs font-black text-emerald-500">+4.2%</p>
-                    <p className="text-[10px] text-slate-300">평단 48,200</p>
-                  </div>
-                </div>
-              ))}
-            </>
-          )}
+              <span className="text-[10px] font-bold uppercase tracking-widest">시나리오 추가</span>
+            </button>
+          </div>
         </div>
 
-        <div className="p-8 bg-slate-50 border-t border-slate-100">
-          <p className="text-[11px] text-slate-400 leading-relaxed text-center">
-            {activeTab === 'quant' ? "Drag a scenario to apply it." : "Select a stock to start trading."}
-          </p>
+        <div className="p-8 bg-white border-t border-slate-100">
+          <div className="bg-slate-50 border border-slate-100 rounded-2xl p-4 flex items-center gap-3">
+            <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-600">
+              <Info className="w-4 h-4" />
+            </div>
+            <p className="text-[11px] text-slate-500 leading-tight">
+              Drag & Drop signals directly into the chart workspace.
+            </p>
+          </div>
         </div>
       </aside>
 
       {/* Main Content */}
       <main className="flex-1 flex flex-col overflow-hidden">
-        {/* Header/Nav */}
-        <header className="h-20 border-b border-slate-100 flex items-center justify-between px-10 bg-white/80 backdrop-blur-md z-10">
-          <div className="flex items-center gap-4 flex-1">
+        {/* TOP HEADER NAVIGATION */}
+        <header className="h-24 border-b border-slate-100 flex items-center justify-between px-10 bg-white/90 backdrop-blur-xl z-50">
+          <div className="flex items-center gap-2 mr-10 min-w-[120px]">
+            <BarChart3 className="w-6 h-6 text-blue-600" />
+            <h1 className="text-lg font-black tracking-tighter italic whitespace-nowrap">QUANT<span className="text-blue-600">LAB</span></h1>
+          </div>
+
+          <nav className="flex items-center gap-1.5 bg-slate-100/80 p-1.5 rounded-[1.25rem] border border-slate-200/50">
+            <button 
+              onClick={() => setActiveTab('quant')}
+              className={cn(
+                "flex items-center gap-2.5 px-6 py-2.5 rounded-xl text-xs font-black tracking-wider uppercase transition-all whitespace-nowrap",
+                activeTab === 'quant' ? "bg-white text-blue-600 shadow-xl shadow-slate-200" : "text-slate-400 hover:text-slate-600 hover:bg-white/50"
+              )}
+            >
+              <Activity className="w-4 h-4" />
+              퀀트 분석
+            </button>
+            <button 
+              onClick={() => setActiveTab('trade')}
+              className={cn(
+                "flex items-center gap-2.5 px-6 py-2.5 rounded-xl text-xs font-black tracking-wider uppercase transition-all whitespace-nowrap",
+                activeTab === 'trade' ? "bg-white text-blue-600 shadow-xl shadow-slate-200" : "text-slate-400 hover:text-slate-600 hover:bg-white/50"
+              )}
+            >
+              <Zap className="w-4 h-4" />
+              주식 구매
+            </button>
+            <button 
+              onClick={() => setActiveTab('assets')}
+              className={cn(
+                "flex items-center gap-2.5 px-6 py-2.5 rounded-xl text-xs font-black tracking-wider uppercase transition-all whitespace-nowrap",
+                activeTab === 'assets' ? "bg-white text-blue-600 shadow-xl shadow-slate-200" : "text-slate-400 hover:text-slate-600 hover:bg-white/50"
+              )}
+            >
+              <Wallet className="w-4 h-4" />
+              내 자산
+            </button>
+          </nav>
+
+          <div className="flex items-center gap-6 ml-auto">
+            <CountdownTimer />
+            {isLoggedIn ? (
+              <div className="flex items-center gap-5">
+                <div className="text-right flex flex-col justify-center">
+                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-0.5">Premium Member</p>
+                  <p className="text-[11px] font-bold text-slate-800 tracking-tight leading-tight">jackielee01100@gmail.com</p>
+                  <button 
+                    onClick={() => setIsLoggedIn(false)}
+                    className="text-[10px] font-black text-rose-500 uppercase tracking-widest hover:text-rose-600 transition-colors text-right mt-1 w-fit ml-auto"
+                  >
+                    Logout
+                  </button>
+                </div>
+                <button 
+                  className="w-12 h-12 bg-white border border-slate-200 rounded-2xl flex items-center justify-center text-slate-400 hover:text-blue-600 hover:border-blue-100 transition-all shadow-sm group"
+                >
+                  <User className="w-5 h-5 group-hover:scale-110 transition-transform" />
+                </button>
+              </div>
+            ) : (
+              <button 
+                onClick={() => setIsLoggedIn(true)}
+                className="flex items-center gap-3 px-8 py-3.5 bg-slate-900 text-white rounded-2xl text-xs font-black tracking-[0.2em] uppercase shadow-2xl shadow-slate-300 hover:bg-blue-600 hover:-translate-y-1 transition-all"
+              >
+                <LogIn className="w-4 h-4" />
+                Log In
+              </button>
+            )}
+          </div>
+        </header>
+
+        {/* SUBSIDIARY SEARCH/TIME BAR */}
+        {activeTab !== 'assets' && (
+          <div className="h-16 border-b border-slate-100 flex items-center justify-between px-10 bg-white/50 backdrop-blur-md">
             <div className="relative group max-w-sm w-full">
               <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
               <input 
                 type="text" 
                 placeholder="Search stocks..."
-                className="w-full bg-slate-50 border border-slate-200 rounded-xl py-2.5 pl-11 pr-4 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all font-medium"
+                className="w-full bg-slate-100/50 border border-slate-200/50 rounded-xl py-2 pl-11 pr-4 text-[11px] font-bold focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all uppercase tracking-wider"
                 value={searchQuery}
                 onChange={e => setSearchQuery(e.target.value)}
               />
               {searchQuery && (
-                <div className="absolute top-full left-0 w-full mt-2 bg-white border border-slate-200 rounded-xl shadow-2xl overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200 z-50">
+                <div className="absolute top-full left-0 w-full mt-3 bg-white border border-slate-200 rounded-2xl shadow-2xl overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200 z-[100]">
                   {filteredStocks.map(stock => (
                     <button
                       key={stock.id}
@@ -472,11 +553,11 @@ export default function App() {
                         setSelectedStock(stock);
                         setSearchQuery('');
                       }}
-                      className="w-full px-5 py-4 flex items-center justify-between hover:bg-slate-50 transition-colors text-left border-b border-slate-50 last:border-0"
+                      className="w-full px-6 py-4 flex items-center justify-between hover:bg-blue-50 transition-colors text-left border-b border-slate-50 last:border-0"
                     >
                       <div className="flex items-center gap-3">
-                        <span className="font-bold text-slate-700">{stock.name}</span>
-                        <span className="text-[11px] text-slate-400 font-mono tracking-wider">{stock.code}</span>
+                        <span className="font-bold text-slate-800">{stock.name}</span>
+                        <span className="text-[10px] text-slate-400 font-mono tracking-widest bg-slate-100 px-2 py-0.5 rounded uppercase">{stock.code}</span>
                       </div>
                       <ChevronRight className="w-4 h-4 text-slate-300" />
                     </button>
@@ -484,244 +565,256 @@ export default function App() {
                 </div>
               )}
             </div>
-          </div>
 
-          <div className="flex items-center gap-6">
-            <div className="flex gap-1.5 bg-slate-100 p-1 rounded-lg">
-              {['1D', '1W', '1M', '1Y'].map(t => (
-                <button 
-                  key={t}
-                  className={cn(
-                    "px-3 py-1.5 text-[10px] font-black rounded-md transition-all",
-                    t === '1W' ? "bg-white text-slate-900 shadow-sm" : "text-slate-400 hover:text-slate-600"
-                  )}
-                >
-                  {t}
-                </button>
-              ))}
+            <div className="flex items-center gap-8">
+              <div className="flex gap-1.5 bg-slate-200/50 p-1 rounded-xl">
+                {['1D', '1W', '1M', '1Y'].map(t => (
+                  <button 
+                    key={t}
+                    className={cn(
+                      "px-4 py-1.5 text-[9px] font-black rounded-lg transition-all tracking-widest",
+                      t === '1W' ? "bg-white text-slate-900 shadow-sm" : "text-slate-400 hover:text-slate-600"
+                    )}
+                  >
+                    {t}
+                  </button>
+                ))}
+              </div>
+              <div className="w-px h-6 bg-slate-200" />
+              <button 
+                onClick={() => {
+                  setAppliedScenarios([]);
+                  setChartData(generateMockData(selectedStock.id));
+                }}
+                className="p-2.5 bg-white border border-slate-200 rounded-xl text-slate-400 hover:text-blue-600 hover:border-blue-200 transition-all shadow-sm"
+              >
+                <RefreshCw className="w-4 h-4" />
+              </button>
             </div>
-            <div className="w-px h-6 bg-slate-200" />
-            <button 
-              onClick={() => {
-                setAppliedScenarios([]);
-                setChartData(generateMockData(selectedStock.id));
-              }}
-              className="p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-400 hover:text-slate-900 hover:border-slate-300 transition-all shadow-sm"
-            >
-              <RefreshCw className="w-4 h-4" />
-            </button>
           </div>
-        </header>
+        )}
 
         {/* Dashboard Content */}
-        <div className="flex-1 p-10 overflow-y-auto custom-scrollbar bg-slate-50/50">
-          {/* Stock Info Bar */}
-          <div className="flex items-end justify-between mb-10">
-            <div>
-              <div className="flex items-center gap-4 mb-3">
-                <div className="px-5 py-2.5 bg-white border border-slate-200 rounded-xl shadow-sm flex items-center gap-3">
-                  <span className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse" />
-                  <h1 className="text-xl font-black text-slate-800">{selectedStock.name}</h1>
-                  <span className="text-slate-400 text-sm font-mono tracking-wider">{selectedStock.code}.KS</span>
+        <div className="flex-1 p-10 overflow-y-auto custom-scrollbar bg-[#F8FAFC]">
+          {activeTab === 'assets' ? (
+            <AssetView />
+          ) : (
+            <>
+              {/* Stock Info Bar */}
+              <div className="flex items-end justify-between mb-10">
+                <div>
+                  <div className="flex items-center gap-4 mb-3">
+                    <div className="px-5 py-2.5 bg-white border border-slate-200 rounded-2xl shadow-sm flex items-center gap-3">
+                      <span className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse" />
+                      <h1 className="text-xl font-black text-slate-900 tracking-tight">{selectedStock.name}</h1>
+                      <div className="w-px h-4 bg-slate-200" />
+                      <span className="text-slate-400 text-[11px] font-bold tracking-widest uppercase">KOSPI {selectedStock.code}</span>
+                    </div>
+                  </div>
+                  <div className="flex items-baseline gap-4 ml-1">
+                    <span className="text-5xl font-black tracking-tighter text-slate-900">
+                      {chartData[chartData.length - 1]?.price.toLocaleString()}
+                      <span className="text-base font-bold text-slate-400 ml-2 tracking-widest">KRW</span>
+                    </span>
+                    <span className={cn(
+                      "text-sm font-black flex items-center gap-1.5 px-3 py-1 rounded-lg",
+                      (chartData[chartData.length - 1]?.price > chartData[0]?.price) ? "bg-emerald-50 text-emerald-600" : "bg-rose-50 text-rose-600"
+                    )}>
+                      {(chartData[chartData.length - 1]?.price > chartData[0]?.price) ? "+" : ""}
+                      {(chartData[chartData.length - 1]?.price - chartData[0]?.price).toLocaleString()} 
+                      ({((chartData[chartData.length - 1]?.price / chartData[0]?.price - 1) * 100).toFixed(2)}%)
+                      {(chartData[chartData.length - 1]?.price > chartData[0]?.price) ? <TrendingUp className="w-4 h-4" /> : <ChevronRight className="w-4 h-4 rotate-90" />}
+                    </span>
+                  </div>
                 </div>
-              </div>
-              <div className="flex items-baseline gap-4 ml-1">
-                <span className="text-4xl font-black tracking-tight text-slate-900">
-                  {chartData[chartData.length - 1]?.price.toLocaleString()}
-                  <span className="text-lg font-medium text-slate-400 ml-1.5">KRW</span>
-                </span>
-                <span className={cn(
-                  "text-sm font-bold flex items-center gap-1",
-                  (chartData[chartData.length - 1]?.price > chartData[0]?.price) ? "text-emerald-500" : "text-rose-500"
-                )}>
-                  {(chartData[chartData.length - 1]?.price > chartData[0]?.price) ? "+" : ""}
-                  {(chartData[chartData.length - 1]?.price - chartData[0]?.price).toLocaleString()} 
-                  ({((chartData[chartData.length - 1]?.price / chartData[0]?.price - 1) * 100).toFixed(2)}%)
-                  {(chartData[chartData.length - 1]?.price > chartData[0]?.price) ? <TrendingUp className="w-4 h-4" /> : <ChevronRight className="w-4 h-4 rotate-90" />}
-                </span>
-              </div>
-            </div>
 
-            {activeTab === 'quant' && (
-              <div className="flex -space-x-3">
-                <AnimatePresence>
-                  {appliedScenarios.map(id => {
-                    const s = SCENARIOS.find(x => x.id === id);
-                    return s ? (
-                      <motion.div
-                        key={id}
-                        initial={{ scale: 0.5, opacity: 0, x: 20 }}
-                        animate={{ scale: 1, opacity: 1, x: 0 }}
-                        exit={{ scale: 0.5, opacity: 0, x: 20 }}
-                        className="w-12 h-12 rounded-full border-[3px] border-[#F8FAFC] flex items-center justify-center shadow-xl shadow-slate-200 cursor-help group relative z-10 hover:-translate-y-1 transition-transform"
-                        style={{ backgroundColor: s.color }}
-                        title={s.name}
+                {activeTab === 'quant' && (
+                  <div className="flex -space-x-3">
+                    <AnimatePresence>
+                      {appliedScenarios.map(id => {
+                        const s = SCENARIOS.find(x => x.id === id);
+                        return s ? (
+                          <motion.div
+                            key={id}
+                            initial={{ scale: 0.5, opacity: 0, x: 20 }}
+                            animate={{ scale: 1, opacity: 1, x: 0 }}
+                            exit={{ scale: 0.5, opacity: 0, x: 20 }}
+                            className="w-14 h-14 rounded-3xl border-[4px] border-[#F8FAFC] flex items-center justify-center shadow-2xl shadow-slate-200 cursor-help group relative z-10 hover:-translate-y-1 transition-transform"
+                            style={{ backgroundColor: s.color }}
+                          >
+                            {React.cloneElement(s.icon as React.ReactElement, { className: 'w-6 h-6 text-white' })}
+                            <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-4 px-4 py-2 bg-slate-900 text-white rounded-xl text-[10px] font-black tracking-[0.2em] uppercase whitespace-nowrap opacity-0 group-hover:opacity-100 transition-all pointer-events-none shadow-2xl z-[100]">
+                              {s.name} Applied
+                            </div>
+                          </motion.div>
+                        ) : null;
+                      })}
+                    </AnimatePresence>
+                  </div>
+                )}
+              </div>
+
+              {activeTab === 'quant' ? (
+                <div 
+                  className={cn(
+                    "relative bg-white border border-slate-200 rounded-[3rem] h-[600px] transition-all flex flex-col shadow-2xl shadow-slate-100/50 overflow-hidden",
+                    isOverDropZone && "border-blue-400 ring-[20px] ring-blue-50/50"
+                  )}
+                  onDragEnter={(e) => {
+                    e.preventDefault();
+                    setIsOverDropZone(true);
+                  }}
+                  onDragOver={(e) => {
+                    e.preventDefault();
+                  }}
+                  onDragLeave={() => {
+                    setIsOverDropZone(false);
+                  }}
+                  onDrop={(e) => {
+                    e.preventDefault();
+                    setIsOverDropZone(false);
+                    if (appliedScenarios.length < SCENARIOS.length) {
+                      const next = SCENARIOS.find(s => !appliedScenarios.includes(s.id));
+                      if (next) handleDrop(next.id);
+                    }
+                  }}
+                >
+                  {/* Visual indicator for drop zone when dragging */}
+                  <AnimatePresence>
+                    {isOverDropZone && (
+                      <motion.div 
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="absolute inset-0 z-[100] flex items-center justify-center bg-blue-600/10 backdrop-blur-xl pointer-events-none"
                       >
-                        {React.cloneElement(s.icon as React.ReactElement, { className: 'w-5 h-5 text-white' })}
-                        <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-3 px-4 py-2 bg-slate-900 text-white rounded-xl text-[10px] font-bold tracking-wider uppercase whitespace-nowrap opacity-0 group-hover:opacity-100 transition-all pointer-events-none shadow-2xl z-50">
-                          {s.name} Active
+                        <div className="bg-white p-20 rounded-full border-[6px] border-dashed border-blue-600 shadow-[0_32px_64px_rgba(37,99,235,0.2)] animate-in zoom-in-75 duration-500">
+                          <Plus className="w-24 h-24 text-blue-600" />
                         </div>
                       </motion.div>
-                    ) : null;
-                  })}
-                </AnimatePresence>
-              </div>
-            )}
-          </div>
-
-          {activeTab === 'quant' ? (
-            <div 
-              className={cn(
-                "relative bg-white border border-slate-200 rounded-[2.5rem] h-[550px] transition-all flex flex-col shadow-sm overflow-hidden",
-                isOverDropZone && "border-blue-400 ring-8 ring-blue-50/50"
-              )}
-              onDragEnter={(e) => {
-                e.preventDefault();
-                setIsOverDropZone(true);
-              }}
-              onDragOver={(e) => {
-                e.preventDefault();
-              }}
-              onDragLeave={() => {
-                setIsOverDropZone(false);
-              }}
-              onDrop={(e) => {
-                e.preventDefault();
-                setIsOverDropZone(false);
-                if (appliedScenarios.length < SCENARIOS.length) {
-                  const next = SCENARIOS.find(s => !appliedScenarios.includes(s.id));
-                  if (next) handleDrop(next.id);
-                }
-              }}
-            >
-              {/* Visual indicator for drop zone when dragging */}
-              <AnimatePresence>
-                {isOverDropZone && (
-                  <motion.div 
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    exit={{ opacity: 0 }}
-                    className="absolute inset-0 z-30 flex items-center justify-center bg-blue-50/60 backdrop-blur-[2px] pointer-events-none"
-                  >
-                    <div className="bg-white p-12 rounded-full border-4 border-dashed border-blue-400 shadow-2xl animate-in zoom-in-75 duration-300">
-                      <Plus className="w-16 h-16 text-blue-500" />
-                    </div>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-
-              {/* Chart Area */}
-              <div className="flex-1 p-10 relative">
-                <ResponsiveContainer width="100%" height="100%">
-                  <AreaChart data={chartData}>
-                    <defs>
-                      <linearGradient id="colorPrice" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="#3B82F6" stopOpacity={0.15}/>
-                        <stop offset="95%" stopColor="#3B82F6" stopOpacity={0}/>
-                      </linearGradient>
-                    </defs>
-                    <CartesianGrid strokeDasharray="4 4" stroke="#F1F5F9" vertical={false} />
-                    <XAxis 
-                      dataKey="date" 
-                      stroke="#94A3B8" 
-                      fontSize={11} 
-                      tickLine={false} 
-                      axisLine={false}
-                      tick={{ fontWeight: 600 }}
-                    />
-                    <YAxis 
-                      stroke="#94A3B8" 
-                      fontSize={11} 
-                      tickLine={false} 
-                      axisLine={false} 
-                      orientation="right"
-                      domain={['auto', 'auto']}
-                      tick={{ fontWeight: 600 }}
-                    />
-                    <Tooltip 
-                      contentStyle={{ 
-                        backgroundColor: '#FFFFFF', 
-                        borderColor: '#E2E8F0',
-                        borderRadius: '16px',
-                        fontSize: '12px',
-                        fontWeight: 'bold',
-                        boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)'
-                      }}
-                      itemStyle={{ color: '#1E293B' }}
-                    />
-                    
-                    <Area 
-                      type="monotone" 
-                      dataKey="price" 
-                      stroke="#3B82F6" 
-                      strokeWidth={3}
-                      fillOpacity={1} 
-                      fill="url(#colorPrice)" 
-                      animationDuration={2000}
-                    />
-
-                    {appliedScenarios.includes('ma-cross') && (
-                      <>
-                        <Line type="monotone" dataKey="ma5" stroke="#F59E0B" strokeWidth={2} dot={false} strokeDasharray="6 6" />
-                        <Line type="monotone" dataKey="ma20" stroke="#8B5CF6" strokeWidth={2} dot={false} strokeDasharray="4 4" />
-                      </>
                     )}
+                  </AnimatePresence>
 
-                    {signals.map((sig, i) => (
-                      <ReferenceDot 
-                        key={i}
-                        x={sig.x} 
-                        y={sig.y} 
-                        r={6} 
-                        fill="white" 
-                        stroke={sig.color} 
-                        strokeWidth={3}
-                      />
-                    ))}
-                  </AreaChart>
-                </ResponsiveContainer>
-              </div>
+                  {/* Chart Area */}
+                  <div className="flex-1 p-12 relative">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <AreaChart data={chartData}>
+                        <defs>
+                          <linearGradient id="colorPrice" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="5%" stopColor="#2563EB" stopOpacity={0.2}/>
+                            <stop offset="95%" stopColor="#2563EB" stopOpacity={0}/>
+                          </linearGradient>
+                        </defs>
+                        <CartesianGrid strokeDasharray="6 6" stroke="#F1F5F9" vertical={false} />
+                        <XAxis 
+                          dataKey="date" 
+                          stroke="#94A3B8" 
+                          fontSize={11} 
+                          tickLine={false} 
+                          axisLine={false}
+                          tick={{ fontWeight: 800 }}
+                        />
+                        <YAxis 
+                          stroke="#94A3B8" 
+                          fontSize={11} 
+                          tickLine={false} 
+                          axisLine={false} 
+                          orientation="right"
+                          domain={['auto', 'auto']}
+                          tick={{ fontWeight: 800 }}
+                        />
+                        <Tooltip 
+                          contentStyle={{ 
+                            backgroundColor: '#FFFFFF', 
+                            borderColor: '#E2E8F0',
+                            borderRadius: '24px',
+                            padding: '16px',
+                            fontSize: '12px',
+                            fontWeight: 'bold',
+                            boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.15)',
+                            border: 'none'
+                          }}
+                          itemStyle={{ color: '#1E293B' }}
+                        />
+                        
+                        <Area 
+                          type="monotone" 
+                          dataKey="price" 
+                          stroke="#2563EB" 
+                          strokeWidth={4}
+                          fillOpacity={1} 
+                          fill="url(#colorPrice)" 
+                          animationDuration={2500}
+                        />
 
-              {/* Analytics Bar */}
-              <div className="h-24 border-t border-slate-100 bg-slate-50/80 flex items-center px-10 gap-16 backdrop-blur-sm">
-                <div>
-                  <p className="text-[10px] uppercase font-black text-slate-400 tracking-widest mb-1.5">Backtest Accuracy</p>
-                  <p className="text-xl font-black text-slate-800">74.2% <span className="text-xs font-medium text-slate-400 ml-1">vs Mkt</span></p>
+                        {appliedScenarios.includes('ma-cross') && (
+                          <>
+                            <Line type="monotone" dataKey="ma5" stroke="#F59E0B" strokeWidth={2} dot={false} strokeDasharray="10 5" />
+                            <Line type="monotone" dataKey="ma20" stroke="#8B5CF6" strokeWidth={2} dot={false} strokeDasharray="8 8" />
+                          </>
+                        )}
+
+                        {signals.map((sig, i) => (
+                          <ReferenceDot 
+                            key={i}
+                            x={sig.x} 
+                            y={sig.y} 
+                            r={8} 
+                            fill="white" 
+                            stroke={sig.color} 
+                            strokeWidth={4}
+                            className="drop-shadow-lg"
+                          />
+                        ))}
+                      </AreaChart>
+                    </ResponsiveContainer>
+                  </div>
+
+                  {/* Analytics Bar */}
+                  <div className="h-28 border-t border-slate-100 bg-slate-50/50 flex items-center px-12 gap-20 backdrop-blur-md">
+                    <div className="group cursor-help">
+                      <p className="text-[10px] uppercase font-black text-slate-400 tracking-[0.2em] mb-2 group-hover:text-blue-600 transition-colors">Backtest Score</p>
+                      <p className="text-2xl font-black text-slate-900">74.2% <span className="text-xs font-bold text-emerald-500 ml-1.5">WIN RATE</span></p>
+                    </div>
+                    <div className="h-12 w-px bg-slate-200" />
+                    <div>
+                      <p className="text-[10px] uppercase font-black text-slate-400 tracking-[0.2em] mb-2">Alpha Ratio</p>
+                      <p className="text-2xl font-black text-slate-900">1.82 <span className="text-[10px] font-bold text-slate-400 ml-1.5 italic">PF</span></p>
+                    </div>
+                    <div className="h-12 w-px bg-slate-200" />
+                    <div>
+                      <p className="text-[10px] uppercase font-black text-slate-400 tracking-[0.2em] mb-2">Signal Load</p>
+                      <p className="text-2xl font-black text-slate-900">{signals.length} <span className="text-xs font-bold text-blue-600 ml-1.5 uppercase">Hits</span></p>
+                    </div>
+                    <div className="ml-auto flex items-center gap-6">
+                      <div className="text-right">
+                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Execution Mode</p>
+                        <p className="text-xs text-blue-600 font-black italic uppercase">Automated Strategy Only</p>
+                      </div>
+                      <button className="px-10 py-4 bg-slate-900 text-white rounded-[1.5rem] text-xs font-black tracking-[0.2em] uppercase shadow-[0_20px_40px_rgba(0,0,0,0.15)] hover:bg-blue-600 hover:-translate-y-1 transition-all active:scale-95">
+                        Build Portfolio
+                      </button>
+                    </div>
+                  </div>
                 </div>
-                <div className="h-10 w-px bg-slate-200" />
-                <div>
-                  <p className="text-[10px] uppercase font-black text-slate-400 tracking-widest mb-1.5">Profit Factor</p>
-                  <p className="text-xl font-black text-slate-800">1.82</p>
-                </div>
-                <div className="h-10 w-px bg-slate-200" />
-                <div>
-                  <p className="text-[10px] uppercase font-black text-slate-400 tracking-widest mb-1.5">Active Signals</p>
-                  <p className="text-xl font-black text-slate-800">{signals.length}</p>
-                </div>
-                <div className="ml-auto flex items-center gap-4">
-                  <span className="text-xs text-slate-400 italic font-medium">Applied to full watchlist?</span>
-                  <button className="px-8 py-3 bg-slate-900 text-white rounded-2xl text-xs font-black tracking-widest uppercase shadow-xl shadow-slate-200 hover:bg-slate-800 hover:-translate-y-0.5 transition-all">
-                    Execute Portfolio
-                  </button>
-                </div>
-              </div>
-            </div>
-          ) : (
-            <TradeView stock={selectedStock} price={chartData[chartData.length - 1]?.price || 0} />
+              ) : (
+                <TradeView stock={selectedStock} price={chartData[chartData.length - 1]?.price || 0} />
+              )}
+            </>
           )}
 
           {/* Bottom Meta */}
-          <footer className="mt-8 flex justify-between text-[10px] text-slate-400 uppercase tracking-[0.2em] font-black">
-            <div className="flex gap-10">
-              <span className="flex items-center gap-2">
-                <div className="w-1.5 h-1.5 bg-emerald-500 rounded-full" />
-                Real-time Data Active
+          <footer className="mt-10 flex justify-between text-[10px] text-slate-400 uppercase tracking-[0.3em] font-black italic">
+            <div className="flex gap-12">
+              <span className="flex items-center gap-3">
+                <div className="w-2 h-2 bg-emerald-500 rounded-full shadow-[0_0_12px_rgba(16,185,129,0.5)]" />
+                Live Data Synchronized
               </span>
-              <span>Server Latency: 14ms</span>
+              <span>Latency: 14.02ms</span>
             </div>
-            <div className="flex gap-10">
-              <span>Quant Engine v4.2.1-stable</span>
-              <span className="text-slate-300">Updated: {format(new Date(), 'yyyy.MM.dd HH:mm:ss')}</span>
+            <div className="flex gap-12">
+              <span className="text-slate-300">CORE v4.8.2-R1</span>
+              <span>Updated: {format(new Date(), 'yyyy.MM.dd HH:mm:ss')}</span>
             </div>
           </footer>
         </div>
@@ -729,3 +822,102 @@ export default function App() {
     </div>
   );
 }
+
+const AssetView = () => {
+  const assets = [
+    { name: '삼성전자', code: '005930', q: 12, avgPrice: 68400, currPrice: 72100, profit: 5.4 },
+    { name: 'SK하이닉스', code: '000660', q: 8, avgPrice: 172000, currPrice: 184500, profit: 7.2 },
+    { name: '현대차', code: '035420', q: 5, avgPrice: 224000, currPrice: 218000, profit: -2.7 },
+  ];
+
+  const totalValue = assets.reduce((acc, curr) => acc + (curr.currPrice * curr.q), 0);
+  const totalProfit = assets.reduce((acc, curr) => acc + ((curr.currPrice - curr.avgPrice) * curr.q), 0);
+
+  return (
+    <div className="space-y-10 animate-in fade-in duration-700">
+      <div className="grid grid-cols-3 gap-8">
+        <div className="bg-slate-900 rounded-[3rem] p-10 shadow-2xl relative overflow-hidden group">
+          <div className="absolute top-0 right-0 w-32 h-32 bg-blue-600/10 rounded-full blur-3xl -translate-y-10 translate-x-10 group-hover:scale-150 transition-transform duration-1000" />
+          <h3 className="text-[10px] font-black text-slate-500 uppercase tracking-[0.3em] mb-6">Total Portfolio Value</h3>
+          <p className="text-4xl font-black text-white tracking-tighter mb-4">{(totalValue + 125480000).toLocaleString()} <span className="text-sm font-bold text-slate-500 ml-1.5 uppercase tracking-widest italic font-mono">KRW</span></p>
+          <div className="flex items-center gap-3">
+            <span className="px-3 py-1 bg-emerald-500/10 border border-emerald-500/20 rounded-lg text-[10px] font-black text-emerald-500 uppercase tracking-widest">
+              +{(totalProfit / totalValue * 100).toFixed(2)}% (+{totalProfit.toLocaleString()})
+            </span>
+            <span className="text-[9px] font-bold text-slate-600 italic">Across 3 Positions</span>
+          </div>
+        </div>
+
+        <div className="bg-white border border-slate-200 rounded-[3rem] p-10 shadow-2xl shadow-slate-200/50">
+          <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] mb-6">Available Cash</h3>
+          <p className="text-4xl font-black text-slate-900 tracking-tighter mb-4">125,480,000 <span className="text-sm font-bold text-slate-400 ml-1.5 uppercase tracking-widest italic font-mono">KRW</span></p>
+          <div className="flex gap-2">
+            <button className="flex-1 py-3 bg-slate-900 text-white rounded-xl text-[10px] font-black tracking-widest uppercase hover:bg-blue-600 transition-all">Deposit</button>
+            <button className="flex-1 py-3 bg-slate-100 text-slate-600 rounded-xl text-[10px] font-black tracking-widest uppercase hover:bg-slate-200 transition-all">Withdraw</button>
+          </div>
+        </div>
+
+        <div className="bg-white border border-slate-200 rounded-[3rem] p-10 shadow-2xl shadow-slate-200/50 flex flex-col justify-center text-center">
+          <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] mb-3">Portfolio Diversity</p>
+          <div className="flex items-center justify-center gap-1.5 h-10">
+            <div className="w-12 h-4 bg-blue-600 rounded-full" />
+            <div className="w-6 h-4 bg-purple-500 rounded-full" />
+            <div className="w-4 h-4 bg-emerald-500 rounded-full" />
+          </div>
+          <p className="text-[11px] font-black text-slate-900 mt-4 uppercase">Technology Optimized</p>
+        </div>
+      </div>
+
+      <div className="bg-white border border-slate-200 rounded-[3rem] overflow-hidden shadow-2xl shadow-slate-200/20">
+        <div className="px-10 py-8 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
+            <h3 className="text-xs font-black text-slate-900 uppercase tracking-widest">Active Positions</h3>
+            <button className="text-[10px] font-black text-blue-600 hover:underline uppercase tracking-widest">Trade History</button>
+        </div>
+        <div className="overflow-x-auto">
+          <table className="w-full text-left">
+            <thead>
+              <tr className="border-b border-slate-50">
+                <th className="px-10 py-6 text-[10px] font-black text-slate-400 uppercase tracking-widest">Stock</th>
+                <th className="px-6 py-6 text-[10px] font-black text-slate-400 uppercase tracking-widest">Quantity</th>
+                <th className="px-6 py-6 text-[10px] font-black text-slate-400 uppercase tracking-widest">Avg Price</th>
+                <th className="px-6 py-6 text-[10px] font-black text-slate-400 uppercase tracking-widest">Current</th>
+                <th className="px-6 py-6 text-[10px] font-black text-slate-400 uppercase tracking-widest text-right">Profit/Loss</th>
+              </tr>
+            </thead>
+            <tbody>
+              {assets.map(asset => (
+                <tr key={asset.code} className="border-b border-slate-50 last:border-0 hover:bg-slate-50/50 transition-colors group">
+                  <td className="px-10 py-6">
+                    <div className="flex items-center gap-4">
+                        <div className="w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center group-hover:scale-110 transition-transform">
+                            <TrendingUp className={cn("w-5 h-5", asset.profit > 0 ? "text-emerald-500" : "text-rose-500")} />
+                        </div>
+                        <div>
+                            <p className="text-sm font-black text-slate-900">{asset.name}</p>
+                            <p className="text-[10px] font-mono font-bold text-slate-400 tracking-widest uppercase">{asset.code}</p>
+                        </div>
+                    </div>
+                  </td>
+                  <td className="px-6 py-6 text-sm font-bold text-slate-900">{asset.q}주</td>
+                  <td className="px-6 py-6 text-sm font-mono font-bold text-slate-600">{asset.avgPrice.toLocaleString()}</td>
+                  <td className="px-6 py-6 text-sm font-mono font-bold text-slate-900">{asset.currPrice.toLocaleString()}</td>
+                  <td className="px-6 py-6 text-right">
+                    <span className={cn(
+                        "text-sm font-black italic",
+                        asset.profit > 0 ? "text-emerald-500" : "text-rose-500"
+                    )}>
+                        {asset.profit > 0 ? '▲' : '▼'} {Math.abs(asset.profit)}%
+                    </span>
+                    <p className="text-[10px] font-bold text-slate-400 mt-1 uppercase">
+                        {(asset.profit > 0 ? '+' : '-')}{Math.abs((asset.currPrice - asset.avgPrice) * asset.q).toLocaleString()} KRW
+                    </p>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  );
+};
