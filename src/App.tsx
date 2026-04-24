@@ -987,10 +987,10 @@ export default function App() {
         <div className="flex-1 p-10 overflow-y-auto custom-scrollbar bg-[#F8FAFC]">
           {activeTab !== 'assets' && activeTab !== 'notice' && activeTab !== 'history' && activeTab !== 'requests' && activeTab !== 'request-edit' && (
             <div className="flex items-center gap-4 mb-10">
-              <div className="px-6 py-3 bg-white border border-slate-200 rounded-2xl shadow-sm flex items-center gap-3">
-                <span className="w-2.5 h-2.5 bg-blue-600 rounded-full" />
-                <h1 className="text-lg font-black text-slate-900 tracking-tight">나의 시나리오</h1>
-              </div>
+              <span className="w-2.5 h-2.5 bg-blue-600 rounded-full" />
+              <h1 className="text-xl font-black text-slate-900 tracking-tight">
+                {quantType === 'provided' ? '제공 시나리오' : '나의 시나리오'}
+              </h1>
             </div>
           )}
 
