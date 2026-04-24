@@ -105,7 +105,9 @@ const STOCKS: Stock[] = [
   { id: '2', name: 'SK하이닉스', code: '000660' },
   { id: '3', name: 'NAVER', code: '035420' },
   { id: '4', name: '현대차', code: '005380' },
-  { id: '5', name: 'LG에너지솔루션', code: '373220' },
+  { id: '5', name: 'LG엔솔', code: '373220' },
+  { id: '6', name: 'Apple', code: 'AAPL' },
+  { id: '7', name: 'Vanguard S&P 500 ETF', code: 'VOO' },
 ];
 
 // --- Mock Data Generator ---
@@ -157,17 +159,34 @@ const generateMockData = (stockId: string): StockData[] => {
 
 // --- Components ---
 
-const CountdownTimer = () => {
-  const [timeLeft, setTimeLeft] = useState(600); // 10 minutes in seconds
+const CountdownTimer = ({ 
+  isLoggedIn, 
+  onLogout 
+}: { 
+  isLoggedIn: boolean; 
+  onLogout: () => void;
+}) => {
+  const [timeLeft, setTimeLeft] = useState(60); // 1 minute in seconds
 
   useEffect(() => {
-    const handleActivity = () => setTimeLeft(600);
+    if (!isLoggedIn) {
+      setTimeLeft(60);
+      return;
+    }
+
+    const handleActivity = () => setTimeLeft(60);
     window.addEventListener('mousemove', handleActivity);
     window.addEventListener('keydown', handleActivity);
     window.addEventListener('click', handleActivity);
 
     const interval = setInterval(() => {
-      setTimeLeft((prev) => (prev > 0 ? prev - 1 : 0));
+      setTimeLeft((prev) => {
+        if (prev <= 1) {
+          onLogout();
+          return 0;
+        }
+        return prev - 1;
+      });
     }, 1000);
 
     return () => {
@@ -176,15 +195,18 @@ const CountdownTimer = () => {
       window.removeEventListener('click', handleActivity);
       clearInterval(interval);
     };
-  }, []);
+  }, [isLoggedIn, onLogout]);
 
   const minutes = Math.floor(timeLeft / 60);
   const seconds = timeLeft % 60;
 
   return (
     <div className="flex items-center gap-2 px-4 py-2 bg-slate-100 rounded-xl border border-slate-200 shadow-inner">
-      <Clock className="w-3.5 h-3.5 text-blue-600 animate-pulse" />
-      <span className="text-[11px] font-black text-slate-700 font-mono tabular-nums tracking-wider">
+      <Clock className={cn("w-3.5 h-3.5 text-blue-600", isLoggedIn && "animate-pulse")} />
+      <span className={cn(
+        "text-[11px] font-black font-mono tabular-nums tracking-wider",
+        timeLeft < 10 && isLoggedIn ? "text-rose-500" : "text-slate-700"
+      )}>
         {String(minutes).padStart(2, '0')}:{String(seconds).padStart(2, '0')}
       </span>
     </div>
@@ -246,7 +268,7 @@ const TradeView = ({ stock, price, type }: { stock: Stock; price: number; type: 
   
   return (
     <div className="flex-1 flex flex-col overflow-hidden">
-      {type === 'overseas' ? (
+      {type === 'overseas' && stock.code !== 'AAPL' && stock.code !== 'VOO' ? (
         <div className="flex flex-col items-center justify-center h-full py-20 bg-white border border-slate-200 rounded-[3rem] shadow-sm animate-in fade-in duration-700">
           <div className="w-24 h-24 bg-blue-50 rounded-full flex items-center justify-center mb-8">
             <Zap className="w-10 h-10 text-blue-600 opacity-20" />
@@ -262,7 +284,7 @@ const TradeView = ({ stock, price, type }: { stock: Stock; price: number; type: 
             <div className="flex-1 space-y-2 overflow-y-auto custom-scrollbar pr-2">
               {[...Array(8)].map((_, i) => (
                 <div key={`ask-${i}`} className="flex items-center justify-between py-1 px-3 bg-rose-50/30 rounded-lg group hover:bg-rose-50 transition-colors relative">
-                  <span className="text-xs font-bold text-rose-500">{(price + (8-i) * 100).toLocaleString()}</span>
+                  <span className="text-xs font-bold text-rose-500">{(price + (8-i) * (stock.code === 'AAPL' || stock.code === 'VOO' ? 0.5 : 100)).toLocaleString()}</span>
                   <span className="text-[10px] font-mono text-slate-400">{Math.floor(Math.random() * 5000)}</span>
                   <div className="absolute right-0 top-0 bottom-0 bg-rose-500/5 transition-all" style={{ width: `${Math.random() * 40}%` }} />
                 </div>
@@ -273,7 +295,7 @@ const TradeView = ({ stock, price, type }: { stock: Stock; price: number; type: 
               </div>
               {[...Array(8)].map((_, i) => (
                 <div key={`bid-${i}`} className="flex items-center justify-between py-1 px-3 bg-emerald-50/30 rounded-lg group hover:bg-emerald-50 transition-colors">
-                  <span className="text-xs font-bold text-emerald-500">{(price - (i+1) * 100).toLocaleString()}</span>
+                  <span className="text-xs font-bold text-emerald-500">{(price - (i+1) * (stock.code === 'AAPL' || stock.code === 'VOO' ? 0.5 : 100)).toLocaleString()}</span>
                   <span className="text-[10px] font-mono text-slate-400">{Math.floor(Math.random() * 5000)}</span>
                 </div>
               ))}
@@ -306,7 +328,7 @@ const TradeView = ({ stock, price, type }: { stock: Stock; price: number; type: 
 
               <div className="space-y-8 max-w-md">
                 <div>
-                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3 block">Order Price (KRW)</label>
+                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3 block">Order Price ({stock.code === 'AAPL' || stock.code === 'VOO' ? 'USD' : 'KRW'})</label>
                   <input 
                     type="text" 
                     value={price.toLocaleString()} 
@@ -331,7 +353,7 @@ const TradeView = ({ stock, price, type }: { stock: Stock; price: number; type: 
                 <div className="pt-4 border-t border-slate-100">
                   <div className="flex justify-between items-center mb-6">
                     <span className="text-sm font-bold text-slate-400">Estimated Total</span>
-                    <span className="text-2xl font-black text-slate-900">{(price * Number(amount)).toLocaleString()} KRW</span>
+                    <span className="text-2xl font-black text-slate-900">{(price * Number(amount)).toLocaleString()} {stock.code === 'AAPL' || stock.code === 'VOO' ? 'USD' : 'KRW'}</span>
                   </div>
                   <button 
                     className={cn(
@@ -350,7 +372,9 @@ const TradeView = ({ stock, price, type }: { stock: Stock; price: number; type: 
                 <h4 className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Available Balance</h4>
                 <div className="w-1.5 h-1.5 bg-emerald-500 rounded-full" />
               </div>
-              <p className="text-3xl font-black text-white tracking-tight">125,480,000 <span className="text-sm font-medium text-slate-500 ml-1">KRW</span></p>
+              <p className="text-3xl font-black text-white tracking-tight">
+                {stock.code === 'AAPL' || stock.code === 'VOO' ? '45,210.00' : '125,480,000'} <span className="text-sm font-medium text-slate-500 ml-1">{stock.code === 'AAPL' || stock.code === 'VOO' ? 'USD' : 'KRW'}</span>
+              </p>
             </div>
           </div>
         </div>
@@ -360,17 +384,24 @@ const TradeView = ({ stock, price, type }: { stock: Stock; price: number; type: 
 };
 
 export default function App() {
-  const [activeTab, setActiveTab] = useState<'quant' | 'trade' | 'assets'>('quant');
+  const [activeTab, setActiveTab] = useState<'quant' | 'trade' | 'assets' | 'notice'>('quant');
   const [assetType, setAssetType] = useState<'domestic' | 'overseas'>('domestic');
   const [tradeType, setTradeType] = useState<'domestic' | 'overseas'>('domestic');
+  const [quantType, setQuantType] = useState<'provided' | 'mine'>('provided');
   const [isAssetHovered, setIsAssetHovered] = useState(false);
   const [isTradeHovered, setIsTradeHovered] = useState(false);
+  const [isQuantHovered, setIsQuantHovered] = useState(false);
   const [selectedStock, setSelectedStock] = useState<Stock>(STOCKS[0]);
   const [chartData, setChartData] = useState<StockData[]>([]);
   const [appliedScenarios, setAppliedScenarios] = useState<string[]>([]);
-  const [isOverDropZone, setIsOverDropZone] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [showLogoutMessage, setShowLogoutMessage] = useState(false);
+
+  const handleAutoLogout = () => {
+    setIsLoggedIn(false);
+    setShowLogoutMessage(true);
+  };
 
   useEffect(() => {
     setChartData(generateMockData(selectedStock.id));
@@ -415,12 +446,6 @@ export default function App() {
     return result;
   }, [chartData, appliedScenarios]);
 
-  const handleDrop = (scenarioId: string) => {
-    if (!appliedScenarios.includes(scenarioId)) {
-      setAppliedScenarios(prev => [...prev, scenarioId]);
-    }
-  };
-
   return (
     <div className="flex h-screen overflow-hidden bg-[var(--bg)] text-[var(--text-primary)] transition-colors duration-500">
       {/* Main Content */}
@@ -433,16 +458,63 @@ export default function App() {
           </div>
 
           <nav className="flex items-center gap-1.5 bg-slate-100/80 p-1.5 rounded-[1.25rem] border border-slate-200/50">
-            <button 
-              onClick={() => setActiveTab('quant')}
-              className={cn(
-                "flex items-center gap-2.5 px-6 py-2.5 rounded-xl text-xs font-black tracking-wider uppercase transition-all whitespace-nowrap",
-                activeTab === 'quant' ? "bg-white text-blue-600 shadow-xl shadow-slate-200" : "text-slate-400 hover:text-slate-600 hover:bg-white/50"
-              )}
+            <div 
+              className="relative"
+              onMouseEnter={() => setIsQuantHovered(true)}
+              onMouseLeave={() => setIsQuantHovered(false)}
             >
-              <Activity className="w-4 h-4" />
-              퀀트 분석
-            </button>
+              <button 
+                onClick={() => setActiveTab('quant')}
+                className={cn(
+                  "flex items-center gap-2.5 px-6 py-2.5 rounded-xl text-xs font-black tracking-wider uppercase transition-all whitespace-nowrap h-full",
+                  activeTab === 'quant' ? "bg-white text-blue-600 shadow-xl shadow-slate-200" : "text-slate-400 hover:text-slate-600 hover:bg-white/50"
+                )}
+              >
+                <Activity className="w-4 h-4" />
+                퀀트 분석
+              </button>
+
+              <AnimatePresence>
+                {isQuantHovered && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                    className="absolute top-full left-0 mt-2 w-48 bg-white border border-slate-200 rounded-2xl shadow-2xl p-2 z-[100] overflow-hidden"
+                  >
+                    <button 
+                      onClick={() => {
+                        setActiveTab('quant');
+                        setQuantType('provided');
+                        setIsQuantHovered(false);
+                      }}
+                      className={cn(
+                        "w-full flex items-center justify-between px-4 py-3 rounded-xl text-[11px] font-black uppercase tracking-widest transition-all",
+                        (activeTab === 'quant' && quantType === 'provided') ? "bg-blue-50 text-blue-600" : "text-slate-500 hover:bg-slate-50 hover:text-slate-900"
+                      )}
+                    >
+                      제공자료
+                      <ChevronRight className="w-3 h-3 opacity-30" />
+                    </button>
+                    <button 
+                      onClick={() => {
+                        setActiveTab('quant');
+                        setQuantType('mine');
+                        setIsQuantHovered(false);
+                      }}
+                      className={cn(
+                        "w-full flex items-center justify-between px-4 py-3 rounded-xl text-[11px] font-black uppercase tracking-widest transition-all",
+                        (activeTab === 'quant' && quantType === 'mine') ? "bg-blue-50 text-blue-600" : "text-slate-500 hover:bg-slate-50 hover:text-slate-900"
+                      )}
+                    >
+                      나의자료
+                      <ChevronRight className="w-3 h-3 opacity-30" />
+                    </button>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+
             <div 
               className="relative"
               onMouseEnter={() => setIsTradeHovered(true)}
@@ -556,17 +628,32 @@ export default function App() {
                 )}
               </AnimatePresence>
             </div>
+
+            <button 
+              onClick={() => setActiveTab('notice')}
+              className={cn(
+                "flex items-center gap-2.5 px-6 py-2.5 rounded-xl text-xs font-black tracking-wider uppercase transition-all whitespace-nowrap relative",
+                activeTab === 'notice' ? "bg-white text-blue-600 shadow-xl shadow-slate-200" : "text-slate-400 hover:text-slate-600 hover:bg-white/50"
+              )}
+            >
+              <Info className="w-4 h-4" />
+              공지
+              <div className="absolute top-2 right-4 w-1.5 h-1.5 bg-rose-500 rounded-full border border-white" />
+            </button>
           </nav>
 
           <div className="flex items-center gap-6 ml-auto">
-            <CountdownTimer />
+            <CountdownTimer isLoggedIn={isLoggedIn} onLogout={handleAutoLogout} />
             {isLoggedIn ? (
               <div className="flex items-center gap-5">
                 <div className="text-right flex flex-col justify-center">
                   <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-0.5">Premium Member</p>
                   <p className="text-[11px] font-bold text-slate-800 tracking-tight leading-tight">jackielee01100@gmail.com</p>
                   <button 
-                    onClick={() => setIsLoggedIn(false)}
+                    onClick={() => {
+                      setIsLoggedIn(false);
+                      setShowLogoutMessage(false);
+                    }}
                     className="text-[10px] font-black text-rose-500 uppercase tracking-widest hover:text-rose-600 transition-colors text-right mt-1 w-fit ml-auto"
                   >
                     Logout
@@ -580,7 +667,10 @@ export default function App() {
               </div>
             ) : (
               <button 
-                onClick={() => setIsLoggedIn(true)}
+                onClick={() => {
+                  setIsLoggedIn(true);
+                  setShowLogoutMessage(false);
+                }}
                 className="flex items-center gap-3 px-8 py-3.5 bg-slate-900 text-white rounded-2xl text-xs font-black tracking-[0.2em] uppercase shadow-2xl shadow-slate-300 hover:bg-blue-600 hover:-translate-y-1 transition-all"
               >
                 <LogIn className="w-4 h-4" />
@@ -654,211 +744,41 @@ export default function App() {
 
         {/* Dashboard Content */}
         <div className="flex-1 p-10 overflow-y-auto custom-scrollbar bg-[#F8FAFC]">
+          {activeTab !== 'assets' && activeTab !== 'notice' && (
+            <div className="flex items-center gap-4 mb-10">
+              <div className="px-5 py-2.5 bg-white border border-slate-200 rounded-2xl shadow-sm flex items-center gap-3">
+                <span className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse" />
+                <h1 className="text-xl font-black text-slate-900 tracking-tight">{selectedStock.name}</h1>
+                <div className="w-px h-4 bg-slate-200" />
+                <span className="text-slate-400 text-[11px] font-bold tracking-widest uppercase">
+                  {tradeType === 'overseas' || assetType === 'overseas' ? 'GLOBAL' : 'KOSPI'} {selectedStock.code}
+                </span>
+                {activeTab === 'quant' && (
+                  <>
+                    <div className="w-px h-4 bg-slate-200" />
+                    <span className="text-blue-600 text-[11px] font-black tracking-widest uppercase">
+                      {quantType === 'provided' ? '제공자료' : '나의자료'}
+                    </span>
+                  </>
+                )}
+              </div>
+            </div>
+          )}
+
           {activeTab === 'assets' ? (
             <AssetView type={assetType} />
           ) : activeTab === 'trade' ? (
             <TradeView stock={selectedStock} price={chartData[chartData.length - 1]?.price || 0} type={tradeType} />
+          ) : activeTab === 'notice' ? (
+            <NoticeView />
           ) : (
-            <>
-              {/* Stock Info Bar */}
-              <div className="flex items-end justify-between mb-10">
-                <div>
-                  <div className="flex items-center gap-4 mb-3">
-                    <div className="px-5 py-2.5 bg-white border border-slate-200 rounded-2xl shadow-sm flex items-center gap-3">
-                      <span className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse" />
-                      <h1 className="text-xl font-black text-slate-900 tracking-tight">{selectedStock.name}</h1>
-                      <div className="w-px h-4 bg-slate-200" />
-                      <span className="text-slate-400 text-[11px] font-bold tracking-widest uppercase">KOSPI {selectedStock.code}</span>
-                    </div>
-                  </div>
-                  <div className="flex items-baseline gap-4 ml-1">
-                    <span className="text-5xl font-black tracking-tighter text-slate-900">
-                      {chartData[chartData.length - 1]?.price.toLocaleString()}
-                      <span className="text-base font-bold text-slate-400 ml-2 tracking-widest">KRW</span>
-                    </span>
-                    <span className={cn(
-                      "text-sm font-black flex items-center gap-1.5 px-3 py-1 rounded-lg",
-                      (chartData[chartData.length - 1]?.price > chartData[0]?.price) ? "bg-emerald-50 text-emerald-600" : "bg-rose-50 text-rose-600"
-                    )}>
-                      {(chartData[chartData.length - 1]?.price > chartData[0]?.price) ? "+" : ""}
-                      {(chartData[chartData.length - 1]?.price - chartData[0]?.price).toLocaleString()} 
-                      ({((chartData[chartData.length - 1]?.price / chartData[0]?.price - 1) * 100).toFixed(2)}%)
-                      {(chartData[chartData.length - 1]?.price > chartData[0]?.price) ? <TrendingUp className="w-4 h-4" /> : <ChevronRight className="w-4 h-4 rotate-90" />}
-                    </span>
-                  </div>
-                </div>
-
-                {activeTab === 'quant' && (
-                  <div className="flex -space-x-3">
-                    <AnimatePresence>
-                      {appliedScenarios.map(id => {
-                        const s = SCENARIOS.find(x => x.id === id);
-                        return s ? (
-                          <motion.div
-                            key={id}
-                            initial={{ scale: 0.5, opacity: 0, x: 20 }}
-                            animate={{ scale: 1, opacity: 1, x: 0 }}
-                            exit={{ scale: 0.5, opacity: 0, x: 20 }}
-                            className="w-14 h-14 rounded-3xl border-[4px] border-[#F8FAFC] flex items-center justify-center shadow-2xl shadow-slate-200 cursor-help group relative z-10 hover:-translate-y-1 transition-transform"
-                            style={{ backgroundColor: s.color }}
-                          >
-                            {React.cloneElement(s.icon as React.ReactElement, { className: 'w-6 h-6 text-white' })}
-                            <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-4 px-4 py-2 bg-slate-900 text-white rounded-xl text-[10px] font-black tracking-[0.2em] uppercase whitespace-nowrap opacity-0 group-hover:opacity-100 transition-all pointer-events-none shadow-2xl z-[100]">
-                              {s.name} Applied
-                            </div>
-                          </motion.div>
-                        ) : null;
-                      })}
-                    </AnimatePresence>
-                  </div>
-                )}
-              </div>
-
-              {activeTab === 'quant' ? (
-                <div 
-                  className={cn(
-                    "relative bg-white border border-slate-200 rounded-[3rem] h-[600px] transition-all flex flex-col shadow-2xl shadow-slate-100/50 overflow-hidden",
-                    isOverDropZone && "border-blue-400 ring-[20px] ring-blue-50/50"
-                  )}
-                  onDragEnter={(e) => {
-                    e.preventDefault();
-                    setIsOverDropZone(true);
-                  }}
-                  onDragOver={(e) => {
-                    e.preventDefault();
-                  }}
-                  onDragLeave={() => {
-                    setIsOverDropZone(false);
-                  }}
-                  onDrop={(e) => {
-                    e.preventDefault();
-                    setIsOverDropZone(false);
-                    if (appliedScenarios.length < SCENARIOS.length) {
-                      const next = SCENARIOS.find(s => !appliedScenarios.includes(s.id));
-                      if (next) handleDrop(next.id);
-                    }
-                  }}
-                >
-                  {/* Visual indicator for drop zone when dragging */}
-                  <AnimatePresence>
-                    {isOverDropZone && (
-                      <motion.div 
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        exit={{ opacity: 0 }}
-                        className="absolute inset-0 z-[100] flex items-center justify-center bg-blue-600/10 backdrop-blur-xl pointer-events-none"
-                      >
-                        <div className="bg-white p-20 rounded-full border-[6px] border-dashed border-blue-600 shadow-[0_32px_64px_rgba(37,99,235,0.2)] animate-in zoom-in-75 duration-500">
-                          <Plus className="w-24 h-24 text-blue-600" />
-                        </div>
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
-
-                  {/* Chart Area */}
-                  <div className="flex-1 p-12 relative">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <AreaChart data={chartData}>
-                        <defs>
-                          <linearGradient id="colorPrice" x1="0" y1="0" x2="0" y2="1">
-                            <stop offset="5%" stopColor="#2563EB" stopOpacity={0.2}/>
-                            <stop offset="95%" stopColor="#2563EB" stopOpacity={0}/>
-                          </linearGradient>
-                        </defs>
-                        <CartesianGrid strokeDasharray="6 6" stroke="#F1F5F9" vertical={false} />
-                        <XAxis 
-                          dataKey="date" 
-                          stroke="#94A3B8" 
-                          fontSize={11} 
-                          tickLine={false} 
-                          axisLine={false}
-                          tick={{ fontWeight: 800 }}
-                        />
-                        <YAxis 
-                          stroke="#94A3B8" 
-                          fontSize={11} 
-                          tickLine={false} 
-                          axisLine={false} 
-                          orientation="right"
-                          domain={['auto', 'auto']}
-                          tick={{ fontWeight: 800 }}
-                        />
-                        <Tooltip 
-                          contentStyle={{ 
-                            backgroundColor: '#FFFFFF', 
-                            borderColor: '#E2E8F0',
-                            borderRadius: '24px',
-                            padding: '16px',
-                            fontSize: '12px',
-                            fontWeight: 'bold',
-                            boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.15)',
-                            border: 'none'
-                          }}
-                          itemStyle={{ color: '#1E293B' }}
-                        />
-                        
-                        <Area 
-                          type="monotone" 
-                          dataKey="price" 
-                          stroke="#2563EB" 
-                          strokeWidth={4}
-                          fillOpacity={1} 
-                          fill="url(#colorPrice)" 
-                          animationDuration={2500}
-                        />
-
-                        {appliedScenarios.includes('ma-cross') && (
-                          <>
-                            <Line type="monotone" dataKey="ma5" stroke="#F59E0B" strokeWidth={2} dot={false} strokeDasharray="10 5" isAnimationActive={false} />
-                            <Line type="monotone" dataKey="ma20" stroke="#8B5CF6" strokeWidth={2} dot={false} strokeDasharray="8 8" isAnimationActive={false} />
-                          </>
-                        )}
-
-                        {signals.map((sig, i) => (
-                          <ReferenceDot 
-                            key={i}
-                            x={sig.x} 
-                            y={sig.y} 
-                            r={8} 
-                            fill="white" 
-                            stroke={sig.color} 
-                            strokeWidth={4}
-                            className="drop-shadow-lg"
-                          />
-                        ))}
-                      </AreaChart>
-                    </ResponsiveContainer>
-                  </div>
-
-                  {/* Analytics Bar */}
-                  <div className="h-28 border-t border-slate-100 bg-slate-50/50 flex items-center px-12 gap-20 backdrop-blur-md">
-                    <div className="group cursor-help">
-                      <p className="text-[10px] uppercase font-black text-slate-400 tracking-[0.2em] mb-2 group-hover:text-blue-600 transition-colors">Backtest Score</p>
-                      <p className="text-2xl font-black text-slate-900">74.2% <span className="text-xs font-bold text-emerald-500 ml-1.5">WIN RATE</span></p>
-                    </div>
-                    <div className="h-12 w-px bg-slate-200" />
-                    <div>
-                      <p className="text-[10px] uppercase font-black text-slate-400 tracking-[0.2em] mb-2">Alpha Ratio</p>
-                      <p className="text-2xl font-black text-slate-900">1.82 <span className="text-[10px] font-bold text-slate-400 ml-1.5 italic">PF</span></p>
-                    </div>
-                    <div className="h-12 w-px bg-slate-200" />
-                    <div>
-                      <p className="text-[10px] uppercase font-black text-slate-400 tracking-[0.2em] mb-2">Signal Load</p>
-                      <p className="text-2xl font-black text-slate-900">{signals.length} <span className="text-xs font-bold text-blue-600 ml-1.5 uppercase">Hits</span></p>
-                    </div>
-                    <div className="ml-auto flex items-center gap-6">
-                      <div className="text-right">
-                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Execution Mode</p>
-                        <p className="text-xs text-blue-600 font-black italic uppercase">Automated Strategy Only</p>
-                      </div>
-                      <button className="px-10 py-4 bg-slate-900 text-white rounded-[1.5rem] text-xs font-black tracking-[0.2em] uppercase shadow-[0_20px_40px_rgba(0,0,0,0.15)] hover:bg-blue-600 hover:-translate-y-1 transition-all active:scale-95">
-                        Build Portfolio
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              ) : null}
-            </>
+            <QuantDashboard 
+              stock={selectedStock}
+              chartData={chartData}
+              appliedScenarios={appliedScenarios}
+              toggleScenario={toggleScenario}
+              signals={signals}
+            />
           )}
 
           {/* Bottom Meta */}
@@ -878,77 +798,266 @@ export default function App() {
         </div>
       </main>
 
-      {/* Sidebar: Now on the Right */}
-      <aside className={cn(
-        "bg-white border-l border-slate-200 flex flex-col shadow-[-4px_0_24px_rgba(0,0,0,0.02)] transition-all duration-500 ease-in-out",
-        activeTab === 'quant' ? "w-80 opacity-100" : "w-0 opacity-0 overflow-hidden border-0"
-      )}>
-        <div className="p-8 border-b border-slate-100 bg-white whitespace-nowrap">
-          <div className="flex items-center justify-between mb-2">
-            <h2 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">
-              Analysis Tools
-            </h2>
-          </div>
-        </div>
-
-        <div className="flex-1 overflow-y-auto px-6 py-6 custom-scrollbar bg-slate-50/50">
-          <div className="flex flex-col gap-2">
-            {SCENARIOS.map(s => (
-              <ScenarioItem 
-                key={s.id} 
-                scenario={s} 
-                onApply={toggleScenario}
-                isApplied={appliedScenarios.includes(s.id)}
-              />
-            ))}
-            <button className="mt-4 w-full p-4 border-2 border-dashed border-slate-200 rounded-2xl flex flex-col items-center justify-center gap-2 text-slate-400 hover:text-blue-600 hover:border-blue-200 hover:bg-blue-50/30 transition-all group">
-              <div className="w-10 h-10 rounded-full bg-white border border-slate-100 flex items-center justify-center shadow-sm group-hover:scale-110 transition-transform">
-                <Plus className="w-5 h-5" />
-              </div>
-              <span className="text-[10px] font-bold uppercase tracking-widest">시나리오 추가</span>
-            </button>
-          </div>
-        </div>
-
-        <div className="p-8 bg-white border-t border-slate-100">
-          <div className="bg-slate-50 border border-slate-100 rounded-2xl p-4 flex items-center gap-3">
-            <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-600">
-              <Info className="w-4 h-4" />
+      <AnimatePresence>
+        {showLogoutMessage && (
+          <motion.div
+            initial={{ opacity: 0, y: 50, scale: 0.9 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.95 }}
+            className="fixed bottom-10 right-10 z-[200] bg-rose-500 text-white px-8 py-5 rounded-[2rem] shadow-[0_20px_50px_rgba(244,63,94,0.3)] flex items-center gap-4 border border-rose-400/30 backdrop-blur-md"
+          >
+            <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center">
+              <Clock className="w-5 h-5 text-white" />
             </div>
-            <p className="text-[11px] text-slate-500 leading-tight">
-              Drag & Drop signals directly into the chart workspace.
-            </p>
-          </div>
-        </div>
-      </aside>
+            <div>
+              <p className="font-black text-sm tracking-tight">자동으로 로그아웃되었습니다.</p>
+              <p className="text-[10px] font-bold text-rose-100 uppercase tracking-widest mt-0.5">1분간 활동이 없어 세션이 종료되었습니다.</p>
+            </div>
+            <button 
+              onClick={() => setShowLogoutMessage(false)}
+              className="ml-6 w-8 h-8 flex items-center justify-center bg-white/10 rounded-full hover:bg-white/20 transition-all"
+            >
+              <Plus className="w-4 h-4 text-white rotate-45" />
+            </button>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
 
-const AssetView = ({ type }: { type: 'domestic' | 'overseas' }) => {
-  if (type === 'overseas') {
-    return (
-      <div className="flex flex-col items-center justify-center h-full py-20 bg-white border border-slate-200 rounded-[3rem] shadow-sm animate-in fade-in duration-700">
-        <div className="w-24 h-24 bg-blue-50 rounded-full flex items-center justify-center mb-8">
-          <Wallet className="w-10 h-10 text-blue-600 opacity-20" />
+const QuantDashboard = ({ 
+  stock, 
+  chartData, 
+  appliedScenarios, 
+  toggleScenario,
+  signals 
+}: { 
+  stock: Stock; 
+  chartData: StockData[]; 
+  appliedScenarios: string[]; 
+  toggleScenario: (id: string) => void;
+  signals: any[];
+}) => {
+  return (
+    <div className="space-y-8 animate-in fade-in duration-700">
+      {/* Stock Info Bar */}
+      <div className="flex items-end justify-between">
+        <div>
+          <div className="flex items-baseline gap-4 ml-1">
+            <span className="text-5xl font-black tracking-tighter text-slate-900">
+              {chartData[chartData.length - 1]?.price.toLocaleString()}
+              <span className="text-base font-bold text-slate-400 ml-2 tracking-widest">
+                {stock.code === 'AAPL' || stock.code === 'VOO' ? 'USD' : 'KRW'}
+              </span>
+            </span>
+            <span className={cn(
+              "text-sm font-black flex items-center gap-1.5 px-3 py-1 rounded-lg",
+              (chartData[chartData.length - 1]?.price > chartData[0]?.price) ? "bg-emerald-50 text-emerald-600" : "bg-rose-50 text-rose-600"
+            )}>
+              {(chartData[chartData.length - 1]?.price > chartData[0]?.price) ? "+" : ""}
+              {(chartData[chartData.length - 1]?.price - chartData[0]?.price).toLocaleString()} 
+              ({((chartData[chartData.length - 1]?.price / chartData[0]?.price - 1) * 100).toFixed(2)}%)
+              {(chartData[chartData.length - 1]?.price > chartData[0]?.price) ? <TrendingUp className="w-4 h-4" /> : <ChevronRight className="w-4 h-4 rotate-90" />}
+            </span>
+          </div>
         </div>
-        <h2 className="text-2xl font-black text-slate-900 mb-2">해외 주식 내역이 없습니다</h2>
-        <p className="text-slate-400 font-bold tracking-tight">글로벌 시장 투자를 시작해보세요.</p>
-        <button className="mt-8 px-10 py-4 bg-slate-900 text-white rounded-2xl text-[10px] font-black tracking-widest uppercase hover:bg-blue-600 transition-all shadow-xl shadow-slate-200">
-          거래소 연결하기
-        </button>
-      </div>
-    );
-  }
 
-  const assets = [
-    { name: '삼성전자', code: '005930', q: 12, avgPrice: 68400, currPrice: 72100, profit: 5.4 },
-    { name: 'SK하이닉스', code: '000660', q: 8, avgPrice: 172000, currPrice: 184500, profit: 7.2 },
-    { name: '현대차', code: '035420', q: 5, avgPrice: 224000, currPrice: 218000, profit: -2.7 },
+        <div className="flex -space-x-3">
+          <AnimatePresence>
+            {appliedScenarios.map(id => {
+              const s = SCENARIOS.find(x => x.id === id);
+              return s ? (
+                <motion.div
+                  key={id}
+                  initial={{ scale: 0.5, opacity: 0, x: 20 }}
+                  animate={{ scale: 1, opacity: 1, x: 0 }}
+                  exit={{ scale: 0.5, opacity: 0, x: 20 }}
+                  className="w-14 h-14 rounded-3xl border-[4px] border-[#F8FAFC] flex items-center justify-center shadow-2xl shadow-slate-200 cursor-help group relative z-10 hover:-translate-y-1 transition-transform"
+                  style={{ backgroundColor: s.color }}
+                >
+                  {React.cloneElement(s.icon as React.ReactElement, { className: 'w-6 h-6 text-white' })}
+                  <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-4 px-4 py-2 bg-slate-900 text-white rounded-xl text-[10px] font-black tracking-[0.2em] uppercase whitespace-nowrap opacity-0 group-hover:opacity-100 transition-all pointer-events-none shadow-2xl z-[100]">
+                    {s.name} Applied
+                  </div>
+                </motion.div>
+              ) : null;
+            })}
+          </AnimatePresence>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-12 gap-8">
+        {/* Main Chart Area */}
+        <div className="col-span-9 space-y-8">
+          <div className="relative bg-white border border-slate-200 rounded-[3rem] h-[550px] transition-all flex flex-col shadow-2xl shadow-slate-100/50 overflow-hidden">
+            <div className="flex-1 p-12 relative">
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={chartData}>
+                  <defs>
+                    <linearGradient id="colorPrice" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#2563EB" stopOpacity={0.2}/>
+                      <stop offset="95%" stopColor="#2563EB" stopOpacity={0}/>
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="6 6" stroke="#F1F5F9" vertical={false} />
+                  <XAxis 
+                    dataKey="date" 
+                    stroke="#94A3B8" 
+                    fontSize={11} 
+                    tickLine={false} 
+                    axisLine={false}
+                    tick={{ fontWeight: 800 }}
+                  />
+                  <YAxis 
+                    stroke="#94A3B8" 
+                    fontSize={11} 
+                    tickLine={false} 
+                    axisLine={false} 
+                    orientation="right"
+                    domain={['auto', 'auto']}
+                    tick={{ fontWeight: 800 }}
+                  />
+                  <Tooltip 
+                    contentStyle={{ 
+                      backgroundColor: '#FFFFFF', 
+                      borderColor: '#E2E8F0',
+                      borderRadius: '24px',
+                      padding: '16px',
+                      fontSize: '12px',
+                      fontWeight: 'bold',
+                      boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.15)',
+                      border: 'none'
+                    }}
+                    itemStyle={{ color: '#1E293B' }}
+                  />
+                  
+                  <Area 
+                    type="monotone" 
+                    dataKey="price" 
+                    stroke="#2563EB" 
+                    strokeWidth={4}
+                    fillOpacity={1} 
+                    fill="url(#colorPrice)" 
+                    animationDuration={2500}
+                  />
+
+                  {appliedScenarios.includes('ma-cross') && (
+                    <>
+                      <Line type="monotone" dataKey="ma5" stroke="#F59E0B" strokeWidth={2} dot={false} strokeDasharray="10 5" isAnimationActive={false} />
+                      <Line type="monotone" dataKey="ma20" stroke="#8B5CF6" strokeWidth={2} dot={false} strokeDasharray="8 8" isAnimationActive={false} />
+                    </>
+                  )}
+
+                  {signals.map((sig, i) => (
+                    <ReferenceDot 
+                      key={i}
+                      x={sig.x} 
+                      y={sig.y} 
+                      r={8} 
+                      fill="white" 
+                      stroke={sig.color} 
+                      strokeWidth={4}
+                      className="drop-shadow-lg"
+                    />
+                  ))}
+                </AreaChart>
+              </ResponsiveContainer>
+            </div>
+
+            {/* Analytics Bar */}
+            <div className="h-28 border-t border-slate-100 bg-slate-50/50 flex items-center px-12 gap-20 backdrop-blur-md">
+              <div className="group cursor-help">
+                <p className="text-[10px] uppercase font-black text-slate-400 tracking-[0.2em] mb-2 group-hover:text-blue-600 transition-colors">Backtest Score</p>
+                <p className="text-2xl font-black text-slate-900">74.2% <span className="text-xs font-bold text-emerald-500 ml-1.5">WIN RATE</span></p>
+              </div>
+              <div className="h-12 w-px bg-slate-200" />
+              <div>
+                <p className="text-[10px] uppercase font-black text-slate-400 tracking-[0.2em] mb-2">Alpha Ratio</p>
+                <p className="text-2xl font-black text-slate-900">1.82 <span className="text-[10px] font-bold text-slate-400 ml-1.5 italic">PF</span></p>
+              </div>
+              <div className="h-12 w-px bg-slate-200" />
+              <div>
+                <p className="text-[10px] uppercase font-black text-slate-400 tracking-[0.2em] mb-2">Signal Load</p>
+                <p className="text-2xl font-black text-slate-900">{signals.length} <span className="text-xs font-bold text-blue-600 ml-1.5 uppercase">Hits</span></p>
+              </div>
+              <div className="ml-auto">
+                <button className="px-10 py-4 bg-slate-900 text-white rounded-[1.5rem] text-xs font-black tracking-[0.2em] uppercase shadow-[0_20px_40px_rgba(0,0,0,0.15)] hover:bg-blue-600 hover:-translate-y-1 transition-all active:scale-95">
+                  Build Portfolio
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Side Selection Area (Analysis Tools integrated) */}
+        <div className="col-span-3 flex flex-col gap-6">
+          <div className="bg-white border border-slate-200 rounded-[3rem] p-8 shadow-2xl shadow-slate-100/50 h-full">
+            <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] mb-8">Analysis Tools</h3>
+            <div className="flex flex-col gap-4 overflow-y-auto custom-scrollbar max-h-[440px] pr-2">
+              {SCENARIOS.map(s => (
+                <button 
+                  key={s.id} 
+                  onClick={() => toggleScenario(s.id)}
+                  className={cn(
+                    "w-full text-left p-5 rounded-3xl transition-all border group",
+                    appliedScenarios.includes(s.id) 
+                      ? "bg-slate-900 border-slate-900 shadow-xl shadow-slate-200" 
+                      : "bg-white border-slate-100 hover:border-blue-200 hover:bg-blue-50/30"
+                  )}
+                >
+                  <div className="flex items-center gap-4 mb-3">
+                    <div className={cn(
+                      "w-12 h-12 rounded-2xl flex items-center justify-center transition-transform group-hover:scale-110",
+                      appliedScenarios.includes(s.id) ? "bg-white/10" : "bg-slate-50"
+                    )}>
+                      {React.cloneElement(s.icon as React.ReactElement, { 
+                        className: cn("w-6 h-6", appliedScenarios.includes(s.id) ? "text-white" : "text-blue-600") 
+                      })}
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className={cn(
+                        "text-sm font-black tracking-tight leading-tight",
+                        appliedScenarios.includes(s.id) ? "text-white" : "text-slate-900"
+                      )}>{s.name}</p>
+                    </div>
+                  </div>
+                  <p className={cn(
+                    "text-[10px] font-bold leading-relaxed",
+                    appliedScenarios.includes(s.id) ? "text-slate-300" : "text-slate-500"
+                  )}>
+                    {s.description}
+                  </p>
+                </button>
+              ))}
+              <button className="w-full p-6 border-4 border-dashed border-slate-50 rounded-3xl flex flex-col items-center justify-center gap-3 text-slate-300 hover:text-blue-400 hover:border-blue-100 hover:bg-blue-50/10 transition-all group">
+                <div className="w-12 h-12 rounded-full bg-slate-50 flex items-center justify-center group-hover:scale-110 transition-transform">
+                  <Plus className="w-6 h-6" />
+                </div>
+                <span className="text-[10px] font-black uppercase tracking-[0.2em]">Add Strategy</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const AssetView = ({ type }: { type: 'domestic' | 'overseas' }) => {
+  const assets = type === 'domestic' ? [
+    { name: '삼성전자', code: '005930', q: 12, avgPrice: 68400, currPrice: 72100, profit: 5.4, currency: 'KRW' },
+    { name: 'SK하이닉스', code: '000660', q: 8, avgPrice: 172000, currPrice: 184500, profit: 7.2, currency: 'KRW' },
+    { name: '현대차', code: '035420', q: 5, avgPrice: 224000, currPrice: 218000, profit: -2.7, currency: 'KRW' },
+  ] : [
+    { name: 'Apple', code: 'AAPL', q: 25, avgPrice: 175.2, currPrice: 189.4, profit: 8.1, currency: 'USD' },
+    { name: 'Vanguard S&P 500 ETF', code: 'VOO', q: 10, avgPrice: 420.5, currPrice: 462.8, profit: 10.0, currency: 'USD' },
   ];
 
+  const currency = type === 'domestic' ? 'KRW' : 'USD';
   const totalValue = assets.reduce((acc, curr) => acc + (curr.currPrice * curr.q), 0);
   const totalProfit = assets.reduce((acc, curr) => acc + ((curr.currPrice - curr.avgPrice) * curr.q), 0);
+  const availableCash = type === 'domestic' ? 125480000 : 45210;
 
   return (
     <div className="space-y-10 animate-in fade-in duration-700">
@@ -956,18 +1065,18 @@ const AssetView = ({ type }: { type: 'domestic' | 'overseas' }) => {
         <div className="bg-slate-900 rounded-[3rem] p-10 shadow-2xl relative overflow-hidden group">
           <div className="absolute top-0 right-0 w-32 h-32 bg-blue-600/10 rounded-full blur-3xl -translate-y-10 translate-x-10 group-hover:scale-150 transition-transform duration-1000" />
           <h3 className="text-[10px] font-black text-slate-500 uppercase tracking-[0.3em] mb-6">Total Portfolio Value</h3>
-          <p className="text-4xl font-black text-white tracking-tighter mb-4">{(totalValue + 125480000).toLocaleString()} <span className="text-sm font-bold text-slate-500 ml-1.5 uppercase tracking-widest italic font-mono">KRW</span></p>
+          <p className="text-4xl font-black text-white tracking-tighter mb-4">{(totalValue + availableCash).toLocaleString()} <span className="text-sm font-bold text-slate-500 ml-1.5 uppercase tracking-widest italic font-mono">{currency}</span></p>
           <div className="flex items-center gap-3">
             <span className="px-3 py-1 bg-emerald-500/10 border border-emerald-500/20 rounded-lg text-[10px] font-black text-emerald-500 uppercase tracking-widest">
               +{(totalProfit / totalValue * 100).toFixed(2)}% (+{totalProfit.toLocaleString()})
             </span>
-            <span className="text-[9px] font-bold text-slate-600 italic">Across 3 Positions</span>
+            <span className="text-[9px] font-bold text-slate-600 italic">Across {assets.length} Positions</span>
           </div>
         </div>
 
         <div className="bg-white border border-slate-200 rounded-[3rem] p-10 shadow-2xl shadow-slate-200/50">
           <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] mb-6">Available Cash</h3>
-          <p className="text-4xl font-black text-slate-900 tracking-tighter mb-4">125,480,000 <span className="text-sm font-bold text-slate-400 ml-1.5 uppercase tracking-widest italic font-mono">KRW</span></p>
+          <p className="text-4xl font-black text-slate-900 tracking-tighter mb-4">{availableCash.toLocaleString()} <span className="text-sm font-bold text-slate-400 ml-1.5 uppercase tracking-widest italic font-mono">{currency}</span></p>
           <div className="flex gap-2">
             <button className="flex-1 py-3 bg-slate-900 text-white rounded-xl text-[10px] font-black tracking-widest uppercase hover:bg-blue-600 transition-all">Deposit</button>
             <button className="flex-1 py-3 bg-slate-100 text-slate-600 rounded-xl text-[10px] font-black tracking-widest uppercase hover:bg-slate-200 transition-all">Withdraw</button>
@@ -1026,7 +1135,7 @@ const AssetView = ({ type }: { type: 'domestic' | 'overseas' }) => {
                         {asset.profit > 0 ? '▲' : '▼'} {Math.abs(asset.profit)}%
                     </span>
                     <p className="text-[10px] font-bold text-slate-400 mt-1 uppercase">
-                        {(asset.profit > 0 ? '+' : '-')}{Math.abs((asset.currPrice - asset.avgPrice) * asset.q).toLocaleString()} KRW
+                        {(asset.profit > 0 ? '+' : '-')}{Math.abs((asset.currPrice - asset.avgPrice) * asset.q).toLocaleString()} {asset.currency}
                     </p>
                   </td>
                 </tr>
@@ -1034,6 +1143,86 @@ const AssetView = ({ type }: { type: 'domestic' | 'overseas' }) => {
             </tbody>
           </table>
         </div>
+      </div>
+    </div>
+  );
+};
+
+const NoticeView = () => {
+  const notices = [
+    {
+      id: 1,
+      title: "서비스 서버 점검 안내 (05/01 02:00~06:00)",
+      content: "더욱 안정적인 퀀트 분석 서비스를 제공하기 위해 서버 점검을 진행합니다. 해당 시간에는 서비스 이용이 일시 중단되오니 양해 부탁드립니다.",
+      date: "2024.04.24",
+      category: "점검",
+      isNew: true
+    },
+    {
+      id: 2,
+      title: "해외 주식 실시간 시세 제공 서비스 오픈",
+      content: "미국 시장(NYSE, NASDAQ) 실시간 시세 제공 서비스가 정식 출시되었습니다. 이제 전 세계 주요 지수를 실시간 분석해 보세요.",
+      date: "2024.04.22",
+      category: "업데이트",
+      isNew: false
+    },
+    {
+      id: 3,
+      title: "개인정보 처리방침 개정 안내",
+      content: "개정된 법령에 따라 당사의 개인정보 처리방침이 변경되었습니다. 자세한 내용은 전문을 확인해 주시기 바랍니다.",
+      date: "2024.04.15",
+      category: "공지",
+      isNew: false
+    }
+  ];
+
+  return (
+    <div className="max-w-4xl mx-auto space-y-12 animate-in fade-in duration-700">
+      <div className="text-center space-y-4">
+        <h2 className="text-3xl font-black text-slate-900 tracking-tighter">서비스 공지사항</h2>
+        <p className="text-slate-400 font-bold tracking-widest uppercase text-[10px]">QuantLab Service Notices & Updates</p>
+      </div>
+
+      <div className="space-y-6">
+        {notices.map((notice) => (
+          <motion.div 
+            key={notice.id}
+            whileHover={{ y: -4 }}
+            className="bg-white border border-slate-200 rounded-[2.5rem] p-8 shadow-sm hover:shadow-xl hover:shadow-slate-200/50 transition-all cursor-pointer group"
+          >
+            <div className="flex items-center gap-4 mb-4">
+              <span className={cn(
+                "px-3 py-1 rounded-lg text-[9px] font-black uppercase tracking-widest",
+                notice.category === "점검" ? "bg-rose-50 text-rose-500" : 
+                notice.category === "업데이트" ? "bg-blue-50 text-blue-500" : "bg-slate-100 text-slate-500"
+              )}>
+                {notice.category}
+              </span>
+              <span className="text-[10px] font-mono text-slate-400 font-bold">{notice.date}</span>
+              {notice.isNew && (
+                <span className="bg-rose-500 text-white text-[8px] font-black px-2 py-0.5 rounded-full animate-pulse">NEW</span>
+              )}
+            </div>
+            <h3 className="text-xl font-black text-slate-800 mb-4 group-hover:text-blue-600 transition-colors">
+              {notice.title}
+            </h3>
+            <p className="text-sm text-slate-500 leading-relaxed font-medium">
+              {notice.content}
+            </p>
+            <div className="mt-8 pt-6 border-t border-slate-50 flex justify-end">
+              <button className="flex items-center gap-2 text-[10px] font-black text-slate-400 uppercase tracking-widest group-hover:text-slate-900 transition-colors">
+                자세히 보기
+                <ChevronRight className="w-3 h-3" />
+              </button>
+            </div>
+          </motion.div>
+        ))}
+      </div>
+
+      <div className="flex justify-center pt-8">
+        <button className="px-10 py-4 bg-slate-900 text-white rounded-2xl text-[10px] font-black tracking-[0.2em] uppercase shadow-2xl shadow-slate-300 hover:bg-blue-600 transition-all">
+          더 많은 공지사항 보기
+        </button>
       </div>
     </div>
   );
