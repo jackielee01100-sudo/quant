@@ -19,8 +19,10 @@ import {
   BarChart3, 
   Zap, 
   ChevronRight,
+  ChevronLeft,
   Info,
   RefreshCw,
+  Sparkles,
   Plus,
   LogIn,
   Wallet,
@@ -32,7 +34,14 @@ import {
   MoreVertical,
   ChevronDown,
   Calendar,
-  Filter
+  Filter,
+  Trash2,
+  Save,
+  Pencil,
+  HelpCircle,
+  CheckCircle2,
+  XCircle,
+  Trophy
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { clsx, type ClassValue } from 'clsx';
@@ -45,6 +54,141 @@ import { format, subDays, addDays } from 'date-fns';
 function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
+
+// --- Translations ---
+
+const translations = {
+  ko: {
+    login: '로그인',
+    logout: '로그아웃',
+    providedScenarios: '제공 시나리오',
+    myScenarios: '나의 시나리오',
+    trade: '주식주문',
+    domestic: '국내주식',
+    overseas: '해외주식',
+    myAssets: '나의자산',
+    depositDiv: '예수금/배당금',
+    dividend: '배당금',
+    cash: '예수금',
+    service: '고객서비스',
+    quiz: '퀴즈',
+    requests: '요청사항',
+    notice: '공지사항',
+    testResults: '테스트결과',
+    search: '검색...',
+    searchStocks: '종목 검색...',
+    backtestScore: '백테스트 점수',
+    winRate: '선방률',
+    alphaRatio: '알파 비율',
+    signalLoad: '신호 포착',
+    recommendedStocks: '추천 종목',
+    selectScenario: '시나리오 선택',
+    purchasable: '매수 가능',
+    holdings: '보유 수량',
+    quantity: '주문 수량',
+    orderPrice: '주문 가격',
+    estimatedTotal: '전체 예상 금액',
+    totalPortfolio: '총 포트폴리오 가치',
+    activePositions: '보유 종목',
+    exchange: '환전',
+    history: '내역',
+    deposit: '입금',
+    addStrategy: '전략 추가',
+    save: '저장',
+    edit: '수정',
+    delete: '삭제',
+    apply: '적용',
+    reserve: '예약',
+    reservationHistory: '예약 내역',
+    back: '돌아가기',
+    confirm: '확인',
+    question: '문제',
+    explanation: '해설',
+    next: '다음',
+    viewResult: '결과 보기',
+    reset: '다시 풀기',
+    inputRequest: '신규 요청 작성',
+    depositScreen: '입금하기',
+    selectAmount: '금액 선택',
+    currentCash: '현재 예수금',
+    providedData: '제공자료',
+    myData: '나의자료',
+    searchTitle: '포착된 주요 종목 분석',
+    noItems: '포착된 종목이 없습니다.',
+    learningComplete: '학습 완료!',
+    resultText: (score: number, total: number) => `${total}개의 퀴즈 중 ${score}개를 맞췄습니다.`,
+    domesticOrder: '국내주식',
+    overseasOrder: '해외주식',
+    orderHistory: '주문내역',
+    marketPrice: '현재가',
+    availableBalance: '주문 가능 금액'
+  },
+  en: {
+    login: 'Log In',
+    logout: 'Logout',
+    providedScenarios: 'Provided Scenarios',
+    myScenarios: 'My Scenarios',
+    trade: 'Trade',
+    domestic: 'Domestic',
+    overseas: 'Overseas',
+    myAssets: 'My Assets',
+    depositDiv: 'Deposit/Div.',
+    dividend: 'Dividend',
+    cash: 'Deposit',
+    service: 'Service',
+    quiz: 'Quiz',
+    requests: 'Requests',
+    notice: 'Notice',
+    testResults: 'Test Result',
+    search: 'Search...',
+    searchStocks: 'Search Stocks...',
+    backtestScore: 'Backtest Score',
+    winRate: 'WIN RATE',
+    alphaRatio: 'Alpha Ratio',
+    signalLoad: 'Signal Load',
+    recommendedStocks: 'Recommended Stocks',
+    selectScenario: 'Select Scenario',
+    purchasable: 'Purchasable',
+    holdings: 'Holdings',
+    quantity: 'Quantity',
+    orderPrice: 'Order Price',
+    estimatedTotal: 'Estimated Total',
+    totalPortfolio: 'Total Portfolio Value',
+    activePositions: 'Active Positions',
+    exchange: 'Exchange',
+    history: 'History',
+    deposit: 'Deposit',
+    addStrategy: 'Add Strategy',
+    save: 'Save',
+    edit: 'Edit',
+    delete: 'Delete',
+    apply: 'Apply',
+    reserve: 'Reserve',
+    reservationHistory: 'Reservations',
+    back: 'Back',
+    confirm: 'Confirm',
+    question: 'Question',
+    explanation: 'Explanation',
+    next: 'Next',
+    viewResult: 'Result',
+    reset: 'Reset',
+    inputRequest: 'New Request',
+    depositScreen: 'Deposit Cash',
+    selectAmount: 'Select Amount',
+    currentCash: 'Current Balance',
+    providedData: 'Provided Data',
+    myData: 'My Data',
+    searchTitle: 'Captured Item Analysis',
+    noItems: 'No items captured.',
+    learningComplete: 'Learning Complete!',
+    resultText: (score: number, total: number) => `You got ${score} out of ${total} correctly.`,
+    domesticOrder: 'Domestic Stocks',
+    overseasOrder: 'Overseas Stocks',
+    orderHistory: 'Order History',
+    marketPrice: 'Market Price',
+    availableBalance: 'Available Balance'
+  }
+};
 
 // --- Types ---
 
@@ -63,7 +207,9 @@ interface StockData {
 interface Scenario {
   id: string;
   name: string;
+  enName: string;
   description: string;
+  enDescription: string;
   icon: React.ReactNode;
   color: string;
   createdAt: string;
@@ -79,11 +225,93 @@ interface Stock {
 
 // --- Constants ---
 
+interface Quiz {
+  id: number;
+  question: string;
+  enQuestion: string;
+  options: string[];
+  enOptions: string[];
+  correctAnswer: number;
+  explanation: string;
+  enExplanation: string;
+}
+
+const QUIZZES: Quiz[] = [
+  {
+    id: 1,
+    question: "주식 시장에서 'EV/EBITDA'는 무엇을 측정하는 지표인가요?",
+    enQuestion: "What does 'EV/EBITDA' measure in the stock market?",
+    options: [
+      "회사의 부채비율",
+      "기업의 가치가 영업이익의 몇 배인지를 나타내는 지표",
+      "주식 한 주당 순익",
+      "회사의 배당 성향"
+    ],
+    enOptions: [
+      "Company debt ratio",
+      "Indicator of how many times enterprise value is to operating profit",
+      "Earnings per share",
+      "Dividend payout ratio"
+    ],
+    correctAnswer: 1,
+    explanation: "EV/EBITDA는 기업의 가치(Enterprise Value)를 세금 및 이자 지급 전 이익(EBITDA)으로 나눈 값으로, 기업이 영업활동을 통해 얻은 이익으로 기업가치만큼을 벌어들이는 데 몇 년이 걸리는지를 보여줍니다.",
+    enExplanation: "EV/EBITDA is calculated by dividing Enterprise Value by EBITDA. It shows how many years it takes to earn the company's value through operating profits."
+  },
+  {
+    id: 2,
+    question: "조엘 그린블라트의 '마법의 공식'에서 가장 중요하게 생각하는 두 가지 지표는?",
+    enQuestion: "What are the two most important indicators in Joel Greenblatt's 'Magic Formula'?",
+    options: [
+      "PBR과 PER",
+      "자본이익률(ROC)과 이익수익률",
+      "매출액 증가율과 영업이익률",
+      "부채비율과 유보율"
+    ],
+    enOptions: [
+      "PBR and PER",
+      "Return on Capital (ROC) and Earnings Yield",
+      "Revenue growth and Operating margin",
+      "Debt ratio and Reserve ratio"
+    ],
+    correctAnswer: 1,
+    explanation: "마법의 공식은 우량주(높은 자본이익률)를 싼 가격(높은 이익수익률)에 매수하는 전략입니다.",
+    enExplanation: "The Magic Formula is a strategy to buy quality stocks (high ROC) at cheap prices (high earnings yield)."
+  },
+  {
+    id: 3,
+    question: "주식 차트에서 '골든크로스'란 무엇을 의미하나요?",
+    enQuestion: "What does 'Golden Cross' mean in a stock chart?",
+    options: [
+      "단기 이동평균선이 장기 이동평균선을 아래에서 위로 뚫고 올라가는 것",
+      "주가가 급락하는 신호",
+      "거래량이 급격히 줄어드는 현상",
+      "장기 이동평균선이 단기 이동평균선을 위에서 아래로 뚫고 내려가는 것"
+    ],
+    enOptions: [
+      "Short-term moving average crossing above the long-term moving average",
+      "Signal of sharp price drop",
+      "Phenomenon of rapidly decreasing volume",
+      "Long-term moving average crossing above the short-term moving average"
+    ],
+    correctAnswer: 0,
+    explanation: "골든크로스는 강세장으로의 전환을 시사하는 전형적인 매수 신호입니다.",
+    enExplanation: "A Golden Cross is a typical buy signal indicating a transition to a bull market."
+  }
+];
+
+const MAGIC_FORMULA_DATA = [
+  { roc: '42% (A++)', evEbitda: '7.2배 (A)', score: '9.5 / 10', timing: '[골든크로스 대기]', color: 'text-emerald-600' },
+  { roc: '35% (A)', evEbitda: '9.1배 (A-)', score: '9.0 / 10', timing: '[관망]', color: 'text-slate-500' },
+  { roc: '18% (B)', evEbitda: '25.4배 (C)', score: '7.2 / 10', timing: '[분할 매도 권장]', color: 'text-amber-500' },
+];
+
 const SCENARIOS: Scenario[] = [
   {
     id: 'ma-cross',
     name: '이동평균선 골든크로스',
+    enName: 'MA Golden Cross',
     description: '단기 이평선(5일)이 장기 이평선(20일)을 상향 돌파할 때 매수 신호',
+    enDescription: 'Buy signal when the 5-day MA crosses above the 20-day MA',
     icon: <TrendingUp className="w-4 h-4" />,
     color: '#3B82F6',
     createdAt: '2026-04-23',
@@ -92,7 +320,9 @@ const SCENARIOS: Scenario[] = [
   {
     id: 'rsi-oversold',
     name: 'RSI 과매도 반등',
+    enName: 'RSI Oversold Bounce',
     description: 'RSI 지표가 30 이하로 내려갔다가 다시 상승할 때 기술적 반등 포착',
+    enDescription: 'Captures technical bounce when RSI falls below 30 and recovers',
     icon: <Activity className="w-4 h-4" />,
     color: '#10B981',
     createdAt: '2026-04-21',
@@ -101,7 +331,9 @@ const SCENARIOS: Scenario[] = [
   {
     id: 'volume-spike',
     name: '거래량 폭발',
+    enName: 'Volume Spike',
     description: '평균 거래량 대비 200% 이상 기록 시 추세 전환 가능성 확인',
+    enDescription: 'Trend reversal possibility when volume exceeds 200% of average',
     icon: <Zap className="w-4 h-4" />,
     color: '#F59E0B',
     createdAt: '2026-03-10',
@@ -110,11 +342,24 @@ const SCENARIOS: Scenario[] = [
   {
     id: 'bollinger',
     name: '볼린저 밴드 하단',
+    enName: 'Bollinger Band Bottom',
     description: '주가가 볼린저 밴드 하단에 도달하여 지지선을 형성하는 구간',
+    enDescription: 'Price reaching the lower Bollinger Band forming a support level',
     icon: <Layers className="w-4 h-4" />,
     color: '#8B5CF6',
     createdAt: '2026-04-05',
     popularity: 92
+  },
+  {
+    id: 'magic-formula',
+    name: '마법의 공식 (Magic Formula)',
+    enName: 'Magic Formula',
+    description: '우량주(높은 ROC)를 싼 가격(낮은 EV/EBIT)에 매수하는 조엘 그린블라트의 전략',
+    enDescription: "Joel Greenblatt's strategy: buy quality stocks at cheap prices",
+    icon: <Sparkles className="w-4 h-4" />,
+    color: '#EC4899',
+    createdAt: '2026-04-25',
+    popularity: 99
   }
 ];
 
@@ -287,7 +532,8 @@ const TradeView = ({
   type,
   balance,
   ownedShares,
-  cashKRW
+  cashKRW,
+  t
 }: { 
   stock: Stock; 
   price: number; 
@@ -295,6 +541,7 @@ const TradeView = ({
   balance: number;
   ownedShares: number;
   cashKRW: number;
+  t: any
 }) => {
   const [orderTab, setOrderTab] = useState<'buy' | 'sell'>('buy');
   const [orderPrice, setOrderPrice] = useState<number>(price);
@@ -359,11 +606,18 @@ const TradeView = ({
         <div className="flex items-center gap-6 mb-8">
             <div className="flex items-center gap-3 bg-white px-6 py-3 rounded-full border border-slate-100 shadow-sm flex-1 max-w-sm">
                 <Search className="w-4 h-4 text-slate-400" />
-                <span className="text-[10px] font-black text-slate-300 uppercase tracking-widest">Search Stocks...</span>
+                <span className="text-[10px] font-black text-slate-300 uppercase tracking-widest">{t.searchStocks}</span>
             </div>
         </div>
 
         <div className="flex items-center gap-6">
+          <div className="flex flex-col">
+            <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{stock.code} | {stock.type === 'overseas' ? 'GLOBAL' : 'KOSPI'}</span>
+            <h2 className="text-4xl font-black text-slate-900 tracking-tighter">
+              {stock.name}
+            </h2>
+          </div>
+          <div className="h-10 w-px bg-slate-100 mx-4" />
           <h2 className="text-6xl font-black text-slate-900 tracking-tighter">
             {price.toLocaleString()} <span className="text-2xl font-bold text-slate-400 font-mono tracking-normal">{currency}</span>
           </h2>
@@ -399,7 +653,7 @@ const TradeView = ({
             {/* Current Price Divider */}
             <div className="py-10 border-y border-slate-50 text-center my-6 flex flex-col items-center justify-center">
               <p className="text-4xl font-black text-slate-900 tracking-tight">{price.toLocaleString()}</p>
-              <p className="text-[9px] font-black text-slate-400 uppercase tracking-[0.2em] mt-2">Market Price</p>
+              <p className="text-[9px] font-black text-slate-400 uppercase tracking-[0.2em] mt-2">{t.marketPrice}</p>
             </div>
 
             {/* Bid Prices */}
@@ -430,7 +684,7 @@ const TradeView = ({
                   orderTab === 'buy' ? "bg-emerald-500 text-white shadow-xl shadow-emerald-500/30" : "text-slate-400 hover:text-slate-600"
                 )}
               >
-                Buy
+                {t.apply.toUpperCase()} (BUY)
               </button>
               <button 
                 onClick={() => setOrderTab('sell')}
@@ -439,14 +693,14 @@ const TradeView = ({
                   orderTab === 'sell' ? "bg-rose-500 text-white shadow-xl shadow-rose-500/30" : "text-slate-400 hover:text-slate-600"
                 )}
               >
-                Sell
+                {t.delete.toUpperCase()} (SELL)
               </button>
             </div>
 
             <div className="space-y-10">
               <div className="flex items-center justify-between px-2">
                 <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
-                  {orderTab === 'buy' ? 'Purchasable' : 'Holdings'}
+                  {orderTab === 'buy' ? t.purchasable : t.holdings}
                 </span>
                 <span className="text-xs font-black text-slate-700">
                   {orderTab === 'buy' ? `${balance.toLocaleString()} ${currency}` : `${ownedShares}주`}
@@ -454,7 +708,7 @@ const TradeView = ({
               </div>
 
               <div>
-                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4">Order Price ({currency})</p>
+                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4">{t.orderPrice} ({currency})</p>
                 <div className="relative">
                   <input 
                     type="text" 
@@ -466,7 +720,7 @@ const TradeView = ({
               </div>
 
               <div>
-                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4">Quantity</p>
+                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4">{t.quantity}</p>
                 <div className="relative">
                   <input 
                     type="number" 
@@ -498,7 +752,7 @@ const TradeView = ({
               </div>
 
               <div className="flex flex-col sm:flex-row sm:items-center justify-between py-8 border-t border-slate-50 gap-4">
-                <span className="text-[11px] font-bold text-slate-400 uppercase tracking-widest shrink-0">Estimated Total</span>
+                <span className="text-[11px] font-bold text-slate-400 uppercase tracking-widest shrink-0">{t.estimatedTotal}</span>
                 <span className="text-xl sm:text-2xl md:text-3xl font-black text-slate-900 break-all text-right leading-tight">
                   {estimatedTotal.toLocaleString()} <span className="text-lg sm:text-xl font-bold">{currency}</span>
                 </span>
@@ -511,7 +765,7 @@ const TradeView = ({
                   orderTab === 'buy' ? "bg-emerald-500 text-white shadow-emerald-500/40" : "bg-rose-500 text-white shadow-rose-500/40"
                 )}
               >
-                PLACE {orderTab.toUpperCase()} ORDER
+                {orderTab === 'buy' ? t.apply : t.delete} {t.confirm}
               </button>
             </div>
           </div>
@@ -519,7 +773,7 @@ const TradeView = ({
           {/* Available Balance Card */}
           <div className="bg-slate-900 rounded-[3rem] p-12 text-white overflow-hidden relative shadow-2xl shadow-slate-900/30">
             <div className="absolute top-0 right-0 w-80 h-80 bg-blue-600/10 blur-[120px] rounded-full -mr-32 -mt-32" />
-            <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] mb-6 relative z-10">Available Balance</p>
+            <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] mb-6 relative z-10">{t.availableBalance}</p>
             <div className="flex items-baseline gap-4 relative z-10">
               <span className="text-5xl font-black tracking-tighter italic">{cashKRW.toLocaleString()}</span>
               <span className="text-sm font-bold text-slate-500 uppercase tracking-widest">KRW</span>
@@ -531,8 +785,367 @@ const TradeView = ({
   );
 };
 
+// --- Strategy Edit View ---
+
+const StrategyEdit = ({ onBack, onSave }: { onBack: () => void; onSave: () => void }) => {
+  return (
+    <motion.div 
+      initial={{ opacity: 0, x: 20 }}
+      animate={{ opacity: 1, x: 0 }}
+      exit={{ opacity: 0, x: -20 }}
+      className="space-y-8"
+    >
+      <div className="flex items-center gap-4">
+        <button 
+          onClick={onBack}
+          className="w-12 h-12 bg-white border border-slate-200 rounded-2xl flex items-center justify-center hover:bg-slate-50 transition-all shadow-sm"
+        >
+          <ChevronLeft className="w-5 h-5 text-slate-600" />
+        </button>
+        <h2 className="text-3xl font-black text-slate-900 tracking-tighter italic">ADD NEW STRATEGY</h2>
+      </div>
+
+      <div className="bg-white border border-slate-200 rounded-[3rem] p-12 shadow-2xl shadow-slate-100/50">
+        <div className="max-w-3xl mx-auto space-y-12">
+          <div className="space-y-6">
+            <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] ml-2">Strategy Name</label>
+            <input 
+              type="text" 
+              placeholder="전략명을 입력하세요..."
+              className="w-full bg-slate-50 border border-slate-100 rounded-3xl p-8 text-xl font-black text-slate-900 focus:outline-none focus:ring-8 focus:ring-blue-500/5 focus:border-blue-500 transition-all placeholder:text-slate-200"
+            />
+          </div>
+
+          <div className="space-y-6">
+            <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] ml-2">Description</label>
+            <textarea 
+              rows={4}
+              placeholder="전략에 대한 설명을 입력하세요..."
+              className="w-full bg-slate-50 border border-slate-100 rounded-3xl p-8 text-lg font-bold text-slate-700 focus:outline-none focus:ring-8 focus:ring-blue-500/5 focus:border-blue-500 transition-all placeholder:text-slate-200 resize-none"
+            />
+          </div>
+
+          <div className="grid grid-cols-2 gap-8">
+            <div className="space-y-6">
+              <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] ml-2">Target Market</label>
+              <select className="w-full bg-slate-50 border border-slate-100 rounded-3xl p-8 text-sm font-black text-slate-800 focus:outline-none focus:ring-8 focus:ring-blue-500/5 focus:border-blue-500 transition-all appearance-none">
+                <option>Domestic (KOSPI/KOSDAQ)</option>
+                <option>Global (US/NASDAQ)</option>
+              </select>
+            </div>
+            <div className="space-y-6">
+              <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] ml-2">Risk Tolerance</label>
+              <select className="w-full bg-slate-50 border border-slate-100 rounded-3xl p-8 text-sm font-black text-slate-800 focus:outline-none focus:ring-8 focus:ring-blue-500/5 focus:border-blue-500 transition-all appearance-none">
+                <option>Conservative</option>
+                <option>Moderate</option>
+                <option>Aggressive</option>
+              </select>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Footer Buttons */}
+      <div className="flex items-center justify-between gap-6 pt-10 border-t border-slate-100">
+        <button 
+          onClick={onBack}
+          className="flex items-center gap-3 px-10 py-6 bg-slate-100 text-slate-400 rounded-[2rem] text-xs font-black tracking-widest uppercase hover:bg-rose-50 hover:text-rose-500 transition-all group"
+        >
+          <Trash2 className="w-4 h-4" />
+          삭제
+        </button>
+        <div className="flex items-center gap-6">
+          <button 
+            className="flex items-center gap-3 px-10 py-6 bg-white border border-slate-200 text-slate-900 rounded-[2rem] text-xs font-black tracking-widest uppercase hover:bg-slate-50 transition-all shadow-sm"
+          >
+            <Pencil className="w-4 h-4 text-blue-600" />
+            수정
+          </button>
+          <button 
+            onClick={onSave}
+            className="flex items-center gap-3 px-12 py-6 bg-blue-600 text-white rounded-[2rem] text-xs font-black tracking-widest uppercase shadow-2xl shadow-blue-600/30 hover:-translate-y-1 transition-all active:scale-95"
+          >
+            <Save className="w-4 h-4" />
+            저장
+          </button>
+        </div>
+      </div>
+    </motion.div>
+  );
+};
+
+// --- Test Results View ---
+
+const TestResultsView = ({ 
+  scenarios, 
+  onSelectScenario, 
+  selectedScenarioId, 
+  stocks,
+  t 
+}: { 
+  scenarios: Scenario[]; 
+  onSelectScenario: (id: string) => void; 
+  selectedScenarioId: string; 
+  stocks: { name: string; symbol: string; change: string; reason: string }[];
+  t: any
+}) => {
+  return (
+    <div className="grid grid-cols-12 gap-8 animate-in fade-in duration-700">
+      {/* Sidebar: Scenarios */}
+      <div className="col-span-4 space-y-6">
+        <div className="bg-white border border-slate-200 rounded-[3rem] p-8 shadow-2xl shadow-slate-100/50">
+          <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] mb-8">{t.selectScenario}</h3>
+          <div className="space-y-4">
+            {scenarios.map(s => (
+              <button 
+                key={s.id}
+                onClick={() => onSelectScenario(s.id)}
+                className={cn(
+                  "w-full text-left p-6 rounded-3xl transition-all border group",
+                  selectedScenarioId === s.id 
+                    ? "bg-slate-900 border-slate-900 shadow-xl" 
+                    : "bg-white border-slate-100 hover:border-blue-200 hover:bg-blue-50/30"
+                )}
+              >
+                <div className="flex items-center gap-4">
+                  <div className={cn(
+                    "w-10 h-10 rounded-2xl flex items-center justify-center transition-colors",
+                    selectedScenarioId === s.id ? "bg-white/20 text-white" : "bg-slate-50 text-slate-400 group-hover:bg-blue-100 group-hover:text-blue-600"
+                  )}>
+                    {s.icon}
+                  </div>
+                  <div>
+                    <h4 className={cn(
+                      "text-sm font-black tracking-tight",
+                      selectedScenarioId === s.id ? "text-white" : "text-slate-900"
+                    )}>{s.name}</h4>
+                    <p className={cn(
+                      "text-[10px] font-bold mt-1",
+                      selectedScenarioId === s.id ? "text-slate-400" : "text-slate-500"
+                    )}>Updated: {s.createdAt}</p>
+                  </div>
+                </div>
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* Main: Recommended Stocks */}
+      <div className="col-span-8 space-y-8">
+        <div className="bg-white border border-slate-200 rounded-[3rem] p-12 shadow-2xl shadow-slate-100/50">
+          <div className="flex items-center justify-between mb-12">
+            <div>
+              <h3 className="text-2xl font-black text-slate-900 tracking-tight italic uppercase">{t.recommendedStocks}</h3>
+              <p className="text-[11px] font-black text-slate-400 uppercase tracking-widest mt-1">{t.searchTitle}</p>
+            </div>
+            <div className="px-4 py-2 bg-emerald-50 text-emerald-600 rounded-xl text-[10px] font-black uppercase tracking-widest">
+              Live Analysis
+            </div>
+          </div>
+
+          <div className="space-y-6">
+            {stocks.length > 0 ? (
+              stocks.map((stock, idx) => (
+                <motion.div 
+                  key={idx}
+                  initial={{ opacity: 0, scale: 0.95 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ delay: idx * 0.1 }}
+                  className="p-8 bg-slate-50 border border-slate-100 rounded-[2.5rem] group hover:bg-white hover:border-blue-200 hover:shadow-2xl hover:shadow-slate-200/50 transition-all"
+                >
+                  <div className="flex items-center justify-between mb-6">
+                    <div className="flex items-center gap-4">
+                      <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center text-lg font-black text-slate-900 shadow-sm">
+                        {stock.name[0]}
+                      </div>
+                      <div>
+                        <h4 className="text-xl font-black text-slate-900 tracking-tight">{stock.name}</h4>
+                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest font-mono">{stock.symbol}</span>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <p className={cn(
+                        "text-2xl font-black tracking-tighter",
+                        stock.change.startsWith('+') ? "text-emerald-500" : "text-rose-500"
+                      )}>{stock.change}</p>
+                      <p className="text-[9px] font-black text-slate-300 uppercase tracking-[0.2em]">Expected Vol.</p>
+                    </div>
+                  </div>
+                  <div className="pt-6 border-t border-slate-200/50">
+                    <div className="flex items-start gap-4">
+                      <div className="w-6 h-6 rounded bg-blue-50 text-blue-500 flex items-center justify-center mt-0.5">
+                        <Zap className="w-3.5 h-3.5" />
+                      </div>
+                      <p className="text-sm font-bold text-slate-600 leading-relaxed font-black">{stock.reason}</p>
+                    </div>
+                  </div>
+                </motion.div>
+              ))
+            ) : (
+              <div className="py-20 text-center space-y-4">
+                <div className="w-20 h-20 bg-slate-50 rounded-full flex items-center justify-center mx-auto">
+                  <Search className="w-8 h-8 text-slate-200" />
+                </div>
+                <p className="text-xs font-black text-slate-400 uppercase tracking-widest">{t.noItems}</p>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const QuizView = ({ t, lang }: { t: any, lang: 'ko' | 'en' }) => {
+  const [currentQuizIndex, setCurrentQuizIndex] = useState(0);
+  const [selectedOption, setSelectedOption] = useState<number | null>(null);
+  const [isAnswered, setIsAnswered] = useState(false);
+  const [score, setScore] = useState(0);
+  const [showResult, setShowResult] = useState(false);
+
+  const currentQuiz = QUIZZES[currentQuizIndex];
+
+  const handleOptionSelect = (index: number) => {
+    if (isAnswered) return;
+    setSelectedOption(index);
+    setIsAnswered(true);
+    if (index === currentQuiz.correctAnswer) {
+      setScore(prev => prev + 1);
+    }
+  };
+
+  const handleNext = () => {
+    if (currentQuizIndex < QUIZZES.length - 1) {
+      setCurrentQuizIndex(prev => prev + 1);
+      setSelectedOption(null);
+      setIsAnswered(false);
+    } else {
+      setShowResult(true);
+    }
+  };
+
+  const resetQuiz = () => {
+    setCurrentQuizIndex(0);
+    setSelectedOption(null);
+    setIsAnswered(false);
+    setScore(0);
+    setShowResult(false);
+  };
+
+  if (showResult) {
+    return (
+      <motion.div 
+        initial={{ opacity: 0, scale: 0.9 }}
+        animate={{ opacity: 1, scale: 1 }}
+        className="max-w-xl mx-auto bg-white border border-slate-100 rounded-[3rem] p-12 text-center shadow-2xl shadow-blue-500/10"
+      >
+        <div className="w-24 h-24 bg-blue-50 rounded-full flex items-center justify-center mx-auto mb-8">
+          <Trophy className="w-12 h-12 text-blue-500" />
+        </div>
+        <h2 className="text-4xl font-black text-slate-900 tracking-tighter mb-4">{t.learningComplete}</h2>
+        <p className="text-slate-500 font-bold mb-8">
+          {t.resultText(score, QUIZZES.length)}
+        </p>
+        <button 
+          onClick={resetQuiz}
+          className="w-full py-6 bg-blue-600 text-white rounded-[2rem] font-black tracking-widest uppercase hover:bg-blue-700 transition-all shadow-xl shadow-blue-600/20"
+        >
+          {t.reset}
+        </button>
+      </motion.div>
+    );
+  }
+
+  return (
+    <motion.div 
+      key={currentQuizIndex}
+      initial={{ opacity: 0, x: 20 }}
+      animate={{ opacity: 1, x: 0 }}
+      exit={{ opacity: 0, x: -20 }}
+      className="max-w-2xl mx-auto space-y-10"
+    >
+      <div className="flex items-center justify-between">
+        <span className="text-[10px] font-black text-slate-400 uppercase tracking-[0.4em]">{t.question} {currentQuizIndex + 1} / {QUIZZES.length}</span>
+        <div className="flex gap-1">
+          {QUIZZES.map((_, idx) => (
+            <div key={idx} className={cn("w-8 h-1 pr-1", idx <= currentQuizIndex ? "bg-blue-500" : "bg-slate-100")} />
+          ))}
+        </div>
+      </div>
+
+      <div className="bg-white border border-slate-100 rounded-[3rem] p-12 shadow-2xl shadow-slate-100/50">
+        <h3 className="text-2xl font-black text-slate-900 tracking-tight leading-snug mb-12">
+          {lang === 'ko' ? currentQuiz.question : `Scenario training question ${currentQuizIndex + 1}: What is the correct analysis for this pattern?`}
+        </h3>
+
+        <div className="space-y-4">
+          {currentQuiz.options.map((option, idx) => {
+            const isCorrect = idx === currentQuiz.correctAnswer;
+            const isSelected = idx === selectedOption;
+            
+            let btnClass = "w-full p-6 text-left rounded-3xl border-2 transition-all flex items-center justify-between ";
+            if (!isAnswered) {
+              btnClass += "border-slate-50 hover:border-blue-500 hover:bg-blue-50/50 text-slate-600 font-bold";
+            } else {
+              if (isCorrect) {
+                btnClass += "border-emerald-500 bg-emerald-50 text-emerald-900 font-black";
+              } else if (isSelected) {
+                btnClass += "border-rose-500 bg-rose-50 text-rose-900 font-black";
+              } else {
+                btnClass += "border-slate-50 text-slate-300 pointer-events-none";
+              }
+            }
+
+            return (
+              <button 
+                key={idx}
+                onClick={() => handleOptionSelect(idx)}
+                className={btnClass}
+              >
+                <div className="flex items-center gap-4">
+                  <span className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-xs font-black text-slate-500">{idx + 1}</span>
+                  <span>{option}</span>
+                </div>
+                {isAnswered && isCorrect && <CheckCircle2 className="w-6 h-6 text-emerald-500" />}
+                {isAnswered && isSelected && !isCorrect && <XCircle className="w-6 h-6 text-rose-500" />}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      {isAnswered && (
+        <motion.div 
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="space-y-8"
+        >
+          <div className="bg-blue-50 border border-blue-100 rounded-3xl p-8">
+            <div className="flex items-center gap-3 mb-3">
+              <HelpCircle className="w-5 h-5 text-blue-500" />
+              <span className="text-xs font-black text-blue-600 uppercase tracking-widest">{t.explanation}</span>
+            </div>
+            <p className="text-sm font-bold text-blue-800 leading-relaxed">
+              {lang === 'ko' ? currentQuiz.explanation : "Technical indicators usually show clear signals when patterns repeat based on historical data analysis."}
+            </p>
+          </div>
+          
+          <button 
+            onClick={handleNext}
+            className="w-full py-6 bg-slate-900 text-white rounded-[2rem] font-black tracking-widest uppercase hover:bg-black transition-all shadow-xl shadow-slate-900/10 flex items-center justify-center gap-3"
+          >
+            {currentQuizIndex < QUIZZES.length - 1 ? t.next : t.viewResult}
+            <ArrowRight className="w-4 h-4" />
+          </button>
+        </motion.div>
+      )}
+    </motion.div>
+  );
+};
+
 export default function App() {
-  const [activeTab, setActiveTab] = useState<'quant' | 'trade' | 'assets' | 'notice' | 'requests' | 'history' | 'request-edit'>('quant');
+  const [activeTab, setActiveTab] = useState<'quant' | 'trade' | 'assets' | 'notice' | 'requests' | 'history' | 'request-edit' | 'strategy-edit' | 'quiz' | 'test-results'>('quant');
   const [assetType, setAssetType] = useState<'domestic' | 'overseas' | 'cash'>('domestic');
   const [tradeType, setTradeType] = useState<'domestic' | 'overseas'>('domestic');
   const [quantType, setQuantType] = useState<'provided' | 'mine'>('provided');
@@ -540,6 +1153,28 @@ export default function App() {
   const [isTradeHovered, setIsTradeHovered] = useState(false);
   const [isQuantHovered, setIsQuantHovered] = useState(false);
   const [isServiceHovered, setIsServiceHovered] = useState(false);
+  const [selectedScenarioId, setSelectedScenarioId] = useState<string | null>(null);
+  const [selectedTestScenario, setSelectedTestScenario] = useState<string>(SCENARIOS[0].id);
+
+  // --- Test Results Data ---
+  const TEST_RESULTS_DATA: Record<string, { name: string; symbol: string; change: string; reason: string }[]> = {
+    'ma-cross': [
+      { name: '삼성전자', symbol: '005930', change: '+2.4%', reason: '5일선이 20일선을 상향 돌파하며 강한 매수 신호 포착' },
+      { name: 'SK하이닉스', symbol: '000660', change: '+3.1%', reason: '정배열 진입 초기 단계로 추가 상승 모멘텀 확보' }
+    ],
+    'rsi-divergence': [
+      { name: 'NAVER', symbol: '035420', change: '+1.2%', reason: '과매도 구간 탈출 및 RSI 상승 다이버전스 발생' },
+      { name: '카카오', symbol: '035720', change: '-0.5%', reason: '바닥권 다지기 진행 중, 지지선 확인 권장' }
+    ],
+    'bollinger-breakout': [
+      { name: 'LG에너지솔루션', symbol: '373220', change: '+4.5%', reason: '상단 밴드 돌파와 함께 거래량 실린 강한 추세 형성' }
+    ],
+    'magic-formula': [
+      { name: '현대차', symbol: '005380', change: '+1.8%', reason: '저평가 매력 부각 및 높은 ROC 유지 중' }
+    ]
+  };
+
+  const currentTestStocks = TEST_RESULTS_DATA[selectedTestScenario] || [];
   const [userRequests, setUserRequests] = useState<{ id: string; date: string; title: string; content: string; status: 'pending' | 'completed' }[]>([
     { id: '1', date: new Date().toISOString(), title: '환율 정보 개선 요청', content: '실시간 환율 정보가 더 정확했으면 좋겠습니다.', status: 'completed' },
     { id: '2', date: new Date().toISOString(), title: 'UI 개선안', content: '다크 모드 지원 부탁드려요.', status: 'pending' },
@@ -558,6 +1193,9 @@ export default function App() {
   const [searchQuery, setSearchQuery] = useState('');
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [showLogoutMessage, setShowLogoutMessage] = useState(false);
+  const [lang, setLang] = useState<'ko' | 'en'>('ko');
+
+  const t = translations[lang];
 
   const [cashKRW, setCashKRW] = useState(125480000);
   const [cashUSD, setCashUSD] = useState(45210);
@@ -690,7 +1328,7 @@ export default function App() {
                         (activeTab === 'quant' && quantType === 'provided') ? "bg-blue-50 text-blue-600" : "text-slate-500 hover:bg-slate-50 hover:text-slate-900"
                       )}
                     >
-                      제공자료
+                      {t.providedScenarios}
                       <ChevronRight className="w-3 h-3 opacity-30" />
                     </button>
                     <button 
@@ -704,7 +1342,20 @@ export default function App() {
                         (activeTab === 'quant' && quantType === 'mine') ? "bg-blue-50 text-blue-600" : "text-slate-500 hover:bg-slate-50 hover:text-slate-900"
                       )}
                     >
-                      나의자료
+                      {t.myScenarios}
+                      <ChevronRight className="w-3 h-3 opacity-30" />
+                    </button>
+                    <button 
+                      onClick={() => {
+                        setActiveTab('test-results');
+                        setIsQuantHovered(false);
+                      }}
+                      className={cn(
+                        "w-full flex items-center justify-between px-4 py-3 rounded-xl text-[11px] font-black uppercase tracking-widest transition-all",
+                        activeTab === 'test-results' ? "bg-blue-50 text-blue-600" : "text-slate-500 hover:bg-slate-50 hover:text-slate-900"
+                      )}
+                    >
+                      {t.testResults}
                       <ChevronRight className="w-3 h-3 opacity-30" />
                     </button>
                   </motion.div>
@@ -725,7 +1376,7 @@ export default function App() {
                 )}
               >
                 <Zap className="w-4 h-4" />
-                주식주문
+                {t.trade}
               </button>
 
               <AnimatePresence>
@@ -747,7 +1398,7 @@ export default function App() {
                         (activeTab === 'trade' && tradeType === 'domestic') ? "bg-blue-50 text-blue-600" : "text-slate-500 hover:bg-slate-50 hover:text-slate-900"
                       )}
                     >
-                      국내 주식
+                      {t.domestic}
                       <ChevronRight className="w-3 h-3 opacity-30" />
                     </button>
                     <button 
@@ -761,7 +1412,7 @@ export default function App() {
                         (activeTab === 'trade' && tradeType === 'overseas') ? "bg-blue-50 text-blue-600" : "text-slate-500 hover:bg-slate-50 hover:text-slate-900"
                       )}
                     >
-                      해외 주식
+                      {t.overseas}
                       <ChevronRight className="w-3 h-3 opacity-30" />
                     </button>
                   </motion.div>
@@ -782,7 +1433,7 @@ export default function App() {
                 )}
               >
                 <Wallet className="w-4 h-4" />
-                나의자산
+                {t.myAssets}
               </button>
 
               <AnimatePresence>
@@ -804,7 +1455,7 @@ export default function App() {
                         (activeTab === 'assets' && assetType === 'cash') ? "bg-blue-50 text-blue-600" : "text-slate-500 hover:bg-slate-50 hover:text-slate-900"
                       )}
                     >
-                      예수금
+                      {t.depositDiv}
                       <ChevronRight className="w-3 h-3 opacity-30" />
                     </button>
                     <button 
@@ -818,7 +1469,7 @@ export default function App() {
                         (activeTab === 'assets' && assetType === 'domestic') ? "bg-blue-50 text-blue-600" : "text-slate-500 hover:bg-slate-50 hover:text-slate-900"
                       )}
                     >
-                      국내 주식
+                      {t.domestic}
                       <ChevronRight className="w-3 h-3 opacity-30" />
                     </button>
                     <button 
@@ -832,7 +1483,7 @@ export default function App() {
                         (activeTab === 'assets' && assetType === 'overseas') ? "bg-blue-50 text-blue-600" : "text-slate-500 hover:bg-slate-50 hover:text-slate-900"
                       )}
                     >
-                      해외 주식
+                      {t.overseas}
                       <ChevronRight className="w-3 h-3 opacity-30" />
                     </button>
                   </motion.div>
@@ -853,7 +1504,7 @@ export default function App() {
                 )}
               >
                 <Info className="w-4 h-4" />
-                고객서비스
+                {t.service}
                 <div className="absolute top-2 right-4 w-1.5 h-1.5 bg-rose-500 rounded-full border border-white" />
               </button>
 
@@ -867,15 +1518,15 @@ export default function App() {
                   >
                     <button 
                       onClick={() => {
-                        setActiveTab('notice');
+                        setActiveTab('quiz');
                         setIsServiceHovered(false);
                       }}
                       className={cn(
                         "w-full flex items-center justify-between px-4 py-3 rounded-xl text-[11px] font-black uppercase tracking-widest transition-all",
-                        activeTab === 'notice' ? "bg-blue-50 text-blue-600" : "text-slate-500 hover:bg-slate-50 hover:text-slate-900"
+                        activeTab === 'quiz' ? "bg-blue-50 text-blue-600" : "text-slate-500 hover:bg-slate-50 hover:text-slate-900"
                       )}
                     >
-                      공지사항
+                      퀴즈
                       <ChevronRight className="w-3 h-3 opacity-30" />
                     </button>
                     <button 
@@ -891,6 +1542,22 @@ export default function App() {
                       요청사항
                       <ChevronRight className="w-3 h-3 opacity-30" />
                     </button>
+                    <button 
+                      onClick={() => {
+                        setActiveTab('notice');
+                        setIsServiceHovered(false);
+                      }}
+                      className={cn(
+                        "w-full flex items-center justify-between px-4 py-3 rounded-xl text-[11px] font-black uppercase tracking-widest transition-all relative",
+                        activeTab === 'notice' ? "bg-blue-50 text-blue-600" : "text-slate-500 hover:bg-slate-50 hover:text-slate-900"
+                      )}
+                    >
+                      <div className="flex items-center gap-2">
+                        {t.notice}
+                        <div className="w-1.5 h-1.5 bg-rose-500 rounded-full animate-pulse" />
+                      </div>
+                      <ChevronRight className="w-3 h-3 opacity-30" />
+                    </button>
                   </motion.div>
                 )}
               </AnimatePresence>
@@ -898,6 +1565,26 @@ export default function App() {
           </nav>
 
           <div className="flex items-center gap-6 ml-auto">
+            <div className="flex bg-slate-100 p-1 rounded-xl items-center">
+              <button 
+                onClick={() => setLang('ko')}
+                className={cn(
+                  "px-3 py-1.5 text-[9px] font-black rounded-lg transition-all",
+                  lang === 'ko' ? "bg-white text-blue-600 shadow-sm" : "text-slate-400 hover:text-slate-600"
+                )}
+              >
+                KO
+              </button>
+              <button 
+                onClick={() => setLang('en')}
+                className={cn(
+                  "px-3 py-1.5 text-[9px] font-black rounded-lg transition-all",
+                  lang === 'en' ? "bg-white text-blue-600 shadow-sm" : "text-slate-400 hover:text-slate-600"
+                )}
+              >
+                EN
+              </button>
+            </div>
             <CountdownTimer isLoggedIn={isLoggedIn} onLogout={handleAutoLogout} />
             {isLoggedIn ? (
               <div className="flex items-center gap-5">
@@ -985,16 +1672,32 @@ export default function App() {
 
         {/* Dashboard Content */}
         <div className="flex-1 p-10 overflow-y-auto custom-scrollbar bg-[#F8FAFC]">
-          {activeTab !== 'assets' && activeTab !== 'notice' && activeTab !== 'history' && activeTab !== 'requests' && activeTab !== 'request-edit' && (
+          {activeTab !== 'assets' && activeTab !== 'notice' && activeTab !== 'history' && activeTab !== 'requests' && activeTab !== 'request-edit' && activeTab !== 'quiz' && activeTab !== 'test-results' && (
             <div className="flex items-center gap-4 mb-10">
               <span className="w-2.5 h-2.5 bg-blue-600 rounded-full" />
               <h1 className="text-xl font-black text-slate-900 tracking-tight">
-                {quantType === 'provided' ? '제공 시나리오' : '나의 시나리오'}
+                {activeTab === 'trade' 
+                  ? (tradeType === 'domestic' ? t.domestic : t.overseas)
+                  : (quantType === 'provided' ? t.providedScenarios : t.myScenarios)}
               </h1>
             </div>
           )}
 
-          {activeTab === 'assets' ? (
+          {activeTab === 'test-results' ? (
+            <div className="flex flex-col gap-10">
+              <div className="flex items-center gap-4 mb-2">
+                <span className="w-2.5 h-2.5 bg-blue-600 rounded-full" />
+                <h1 className="text-xl font-black text-slate-900 tracking-tight">전략 시뮬레이션 테스트 결과</h1>
+              </div>
+              <TestResultsView 
+                scenarios={SCENARIOS}
+                selectedScenarioId={selectedTestScenario}
+                onSelectScenario={setSelectedTestScenario}
+                stocks={currentTestStocks}
+                t={t}
+              />
+            </div>
+          ) : activeTab === 'assets' ? (
             <AssetView 
               type={assetType} 
               cashKRW={cashKRW}
@@ -1011,6 +1714,23 @@ export default function App() {
                 setHistoryType(type);
                 setActiveTab('history');
               }}
+              onDeposit={(amount, currency) => {
+                if (currency === 'KRW') setCashKRW(prev => prev + amount);
+                else setCashUSD(prev => prev + amount);
+
+                const newTransaction = {
+                  id: Math.random().toString(36).substr(2, 9),
+                  date: new Date().toISOString(),
+                  type: 'cash',
+                  fromAmount: 0,
+                  fromCurrency: 'EXTERNAL',
+                  toAmount: amount,
+                  toCurrency: currency,
+                  action: 'DEPOSIT' as const
+                };
+                setTransactions(prev => [newTransaction, ...prev]);
+              }}
+              t={t}
             />
           ) : activeTab === 'history' ? (
             <HistoryView 
@@ -1018,6 +1738,8 @@ export default function App() {
               defaultType={historyType} 
               onBack={() => setActiveTab('assets')} 
             />
+          ) : activeTab === 'quiz' ? (
+            <QuizView t={t} lang={lang} />
           ) : activeTab === 'requests' ? (
             <RequestsView 
               requests={userRequests} 
@@ -1056,6 +1778,13 @@ export default function App() {
                 setActiveTab('requests');
               }}
             />
+          ) : activeTab === 'strategy-edit' ? (
+            <StrategyEdit 
+              onBack={() => setActiveTab('quant')} 
+              onSave={() => {
+                setActiveTab('quant');
+              }}
+            />
           ) : activeTab === 'trade' ? (
             <TradeView 
               stock={selectedStock} 
@@ -1064,6 +1793,7 @@ export default function App() {
               balance={(selectedStock.code === 'AAPL' || selectedStock.code === 'VOO') ? cashUSD : cashKRW}
               ownedShares={([...domesticAssets, ...overseasAssets].find(a => a.code === selectedStock.code)?.q || 0)}
               cashKRW={cashKRW}
+              t={t}
             />
           ) : activeTab === 'notice' ? (
             <NoticeView />
@@ -1092,6 +1822,7 @@ export default function App() {
               onShowHistory={() => {
                 setIsReservationModalOpen(true);
               }}
+              onAddStrategy={() => setActiveTab('strategy-edit')}
             />
           )}
 
@@ -1205,7 +1936,8 @@ const QuantDashboard = ({
   removeUserScenario,
   onReserve,
   reservationsCount,
-  onShowHistory
+  onShowHistory,
+  onAddStrategy
 }: { 
   stock: Stock; 
   chartData: StockData[]; 
@@ -1219,6 +1951,7 @@ const QuantDashboard = ({
   onReserve: (id: string) => void;
   reservationsCount: number;
   onShowHistory: () => void;
+  onAddStrategy: () => void;
 }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [sortBy, setSortBy] = useState<'latest' | 'popular'>('latest');
@@ -1428,7 +2161,10 @@ const QuantDashboard = ({
                 </div>
               )}
               {quantType === 'mine' && (
-                <button className="w-full p-6 border-4 border-dashed border-slate-50 rounded-3xl flex flex-col items-center justify-center gap-3 text-slate-300 hover:text-blue-400 hover:border-blue-100 hover:bg-blue-50/10 transition-all group">
+                <button 
+                  onClick={onAddStrategy}
+                  className="w-full p-6 border-4 border-dashed border-slate-50 rounded-3xl flex flex-col items-center justify-center gap-3 text-slate-300 hover:text-blue-400 hover:border-blue-100 hover:bg-blue-50/10 transition-all group"
+                >
                   <div className="w-12 h-12 rounded-full bg-slate-50 flex items-center justify-center group-hover:scale-110 transition-transform">
                     <Plus className="w-6 h-6" />
                   </div>
@@ -1534,6 +2270,61 @@ const QuantDashboard = ({
               </div>
             </div>
           </div>
+
+          {/* Magic Formula Result Table */}
+          <AnimatePresence>
+            {appliedScenarios.includes('magic-formula') && (
+              <motion.div 
+                initial={{ opacity: 0, y: 30 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: 30 }}
+                className="bg-white border border-slate-200 rounded-[3rem] p-12 shadow-2xl shadow-slate-100/50"
+              >
+                <div className="flex items-center gap-6 mb-12">
+                  <div className="w-16 h-16 bg-pink-50 rounded-3xl flex items-center justify-center">
+                    <Sparkles className="w-8 h-8 text-pink-500" />
+                  </div>
+                  <div>
+                    <h3 className="text-2xl font-black text-slate-900 tracking-tight italic uppercase">Magic Formula Analytics</h3>
+                    <p className="text-[11px] font-black text-slate-400 uppercase tracking-widest mt-1">마법의 공식 전략 분석 결과</p>
+                  </div>
+                </div>
+
+                <div className="overflow-x-auto custom-scrollbar pb-6">
+                  <table className="w-full">
+                    <thead>
+                      <tr className="border-b-2 border-slate-100">
+                        <th className="px-8 py-6 text-left text-[12px] font-black text-slate-300 uppercase tracking-[0.2em]">ROC (우량성)</th>
+                        <th className="px-8 py-6 text-left text-[12px] font-black text-slate-300 uppercase tracking-[0.2em]">EV/EBITDA (저렴함)</th>
+                        <th className="px-8 py-6 text-left text-[12px] font-black text-slate-300 uppercase tracking-[0.2em]">마법 공식 점수</th>
+                        <th className="px-8 py-6 text-left text-[12px] font-black text-slate-300 uppercase tracking-[0.2em]">매수 타이밍 (백테스트 결과)</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-50">
+                      {MAGIC_FORMULA_DATA.map((row, idx) => (
+                        <tr key={idx} className="group hover:bg-slate-50/50 transition-all border-b border-transparent hover:border-slate-100">
+                          <td className="px-8 py-10">
+                            <span className="text-2xl font-black text-slate-900 tracking-tighter">{row.roc}</span>
+                          </td>
+                          <td className="px-8 py-10">
+                            <span className="text-2xl font-black text-slate-900 tracking-tighter">{row.evEbitda}</span>
+                          </td>
+                          <td className="px-8 py-10">
+                            <span className="text-3xl font-black text-blue-600 tracking-tighter font-mono">{row.score}</span>
+                          </td>
+                          <td className="px-8 py-10 whitespace-nowrap">
+                            <span className={cn("text-lg font-black tracking-tight", row.color)}>
+                              {row.timing}
+                            </span>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
       </div>
     </div>
@@ -1924,6 +2715,7 @@ const RequestsView = ({
   const [searchQuery, setSearchQuery] = useState('');
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
+  const [isMyRequestOnly, setIsMyRequestOnly] = useState(false);
 
   const itemsPerPage = 5;
   
@@ -1941,9 +2733,11 @@ const RequestsView = ({
       const matchesStart = startDate === '' || rDate >= new Date(startDate);
       const matchesEnd = endDate === '' || rDate <= new Date(endDate);
       
-      return matchesSearch && matchesStart && matchesEnd;
+      const isMyReq = isMyRequestOnly ? (r.id === '1' || r.id === '3' || r.id === '5') : true;
+      
+      return matchesSearch && matchesStart && matchesEnd && isMyReq;
     });
-  }, [requests, searchQuery, startDate, endDate]);
+  }, [requests, searchQuery, startDate, endDate, isMyRequestOnly]);
 
   const totalPages = Math.ceil(filteredRequests.length / itemsPerPage);
   const startIndex = (currentPage - 1) * itemsPerPage;
@@ -1972,6 +2766,20 @@ const RequestsView = ({
           />
         </div>
         <div className="flex items-center gap-3">
+          <button 
+            onClick={() => {
+              setIsMyRequestOnly(!isMyRequestOnly);
+              setCurrentPage(1);
+            }}
+            className={cn(
+              "px-6 py-3 rounded-2xl text-[11px] font-black uppercase tracking-widest transition-all",
+              isMyRequestOnly 
+                ? "bg-blue-600 text-white shadow-lg shadow-blue-600/20" 
+                : "bg-slate-100 text-slate-400 hover:bg-slate-200"
+            )}
+          >
+            [나의요청]
+          </button>
           <div className="flex items-center gap-2 bg-slate-50 border border-slate-100 rounded-2xl p-1 px-4">
             <Calendar className="w-3.5 h-3.5 text-slate-400" />
             <input 
@@ -2165,7 +2973,9 @@ const AssetView = ({
   domesticAssets,
   overseasAssets,
   onOpenExchange,
-  onOpenHistory
+  onOpenHistory,
+  onDeposit,
+  t
 }: { 
   type: 'domestic' | 'overseas' | 'cash',
   cashKRW: number,
@@ -2175,56 +2985,164 @@ const AssetView = ({
   domesticAssets: any[],
   overseasAssets: any[],
   onOpenExchange: (type: 'cash' | 'dividend') => void,
-  onOpenHistory: (type: 'cash' | 'dividend') => void
+  onOpenHistory: (type: 'cash' | 'dividend') => void,
+  onDeposit: (amount: number, currency: 'KRW' | 'USD') => void,
+  t: any
 }) => {
-  const assets = type === 'domestic' ? domesticAssets : type === 'overseas' ? overseasAssets : [];
+  const [isDepositMode, setIsDepositMode] = useState(false);
+  const [depositCurrency, setDepositCurrency] = useState<'KRW' | 'USD'>('KRW');
 
+  const assets = type === 'domestic' ? domesticAssets : type === 'overseas' ? overseasAssets : [];
   const currency = type === 'domestic' ? 'KRW' : 'USD';
   const totalValue = assets.reduce((acc, curr) => acc + (curr.currPrice * curr.q), 0);
   const totalProfit = assets.reduce((acc, curr) => acc + ((curr.currPrice - curr.avgPrice) * curr.q), 0);
 
   if (type === 'cash') {
-    return (
-      <div className="space-y-10 animate-in fade-in duration-700">
-        <div className="grid grid-cols-2 gap-8">
-          <div className="bg-white border border-slate-200 rounded-[3rem] p-10 shadow-2xl shadow-slate-200/50">
-            <div className="flex items-center gap-3 mb-6">
-              <div className="w-2 h-2 bg-emerald-500 rounded-full" />
-              <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em]">예수금</h3>
+    if (isDepositMode) {
+      const presets = depositCurrency === 'KRW' 
+        ? [10000, 50000, 100000, 500000, 1000000]
+        : [10, 50, 100, 500, 1000];
+
+      return (
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="max-w-2xl mx-auto space-y-10"
+        >
+          <div className="flex items-center gap-6">
+            <button 
+              onClick={() => setIsDepositMode(false)}
+              className="w-12 h-12 bg-white border border-slate-200 rounded-2xl flex items-center justify-center text-slate-400 hover:text-blue-600 transition-all shadow-sm"
+            >
+              <ChevronLeft className="w-5 h-5" />
+            </button>
+            <h2 className="text-3xl font-black text-slate-900 tracking-tighter uppercase italic">{t.depositScreen}</h2>
+          </div>
+
+          <div className="bg-white border border-slate-200 rounded-[3rem] p-12 shadow-2xl shadow-slate-100/50 space-y-12">
+            <div className="flex bg-slate-100 p-1.5 rounded-[1.5rem] w-fit mx-auto">
+              <button 
+                onClick={() => setDepositCurrency('KRW')}
+                className={cn(
+                  "px-8 py-3 rounded-[1.25rem] text-[11px] font-black uppercase tracking-widest transition-all",
+                  depositCurrency === 'KRW' ? "bg-white text-blue-600 shadow-xl" : "text-slate-400"
+                )}
+              >
+                KRW
+              </button>
+              <button 
+                onClick={() => setDepositCurrency('USD')}
+                className={cn(
+                  "px-8 py-3 rounded-[1.25rem] text-[11px] font-black uppercase tracking-widest transition-all",
+                  depositCurrency === 'USD' ? "bg-white text-blue-600 shadow-xl" : "text-slate-400"
+                )}
+              >
+                USD
+              </button>
             </div>
-            <div className="space-y-6 mb-8">
-              <div>
-                <p className="text-3xl font-black text-slate-900 tracking-tighter">{cashUSD.toLocaleString(undefined, { maximumFractionDigits: 2 })} <span className="text-[10px] font-bold text-slate-400 ml-1.5 uppercase tracking-widest italic font-mono">USD</span></p>
-                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">Overseas Cash</p>
-              </div>
-              <div className="pt-4 border-t border-slate-100">
-                <p className="text-3xl font-black text-slate-700 tracking-tighter">{cashKRW.toLocaleString()} <span className="text-[10px] font-bold text-slate-400 ml-1.5 uppercase tracking-widest italic font-mono">KRW</span></p>
-                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">Domestic Cash</p>
-              </div>
+
+            <div className="text-center space-y-4">
+              <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em]">{t.currentCash}</p>
+              <p className="text-5xl font-black text-slate-900 tracking-tighter italic">
+                {depositCurrency === 'KRW' ? cashKRW.toLocaleString() : cashUSD.toLocaleString()}
+                <span className="text-xl font-bold text-slate-400 ml-3 italic">{depositCurrency}</span>
+              </p>
             </div>
-            <div className="flex gap-2">
-              <button onClick={() => onOpenExchange('cash')} className="flex-1 py-3 bg-slate-900 text-white rounded-xl text-[9px] font-black tracking-widest uppercase hover:bg-blue-600 transition-all">Exchange</button>
-              <button onClick={() => onOpenHistory('cash')} className="flex-1 py-3 bg-slate-100 text-slate-600 rounded-xl text-[9px] font-black tracking-widest uppercase hover:bg-slate-200 transition-all">History</button>
+
+            <div>
+              <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-6 text-center">{t.selectAmount}</p>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {presets.map(amount => (
+                  <button 
+                    key={amount}
+                    onClick={() => {
+                      onDeposit(amount, depositCurrency);
+                      alert(`${amount.toLocaleString()} ${depositCurrency} 입금 완료되었습니다.`);
+                    }}
+                    className="p-6 bg-slate-50 border border-slate-100 rounded-3xl hover:bg-white hover:border-blue-500 hover:shadow-xl hover:shadow-blue-500/10 transition-all group"
+                  >
+                    <div className="flex items-center justify-between">
+                      <span className="text-2xl font-black text-slate-900 group-hover:text-blue-600 tracking-tighter">+{amount.toLocaleString()}</span>
+                      <span className="text-xs font-black text-slate-400 uppercase italic">{depositCurrency}</span>
+                    </div>
+                  </button>
+                ))}
+              </div>
             </div>
           </div>
-          <div className="bg-white border border-slate-200 rounded-[3rem] p-10 shadow-2xl shadow-slate-200/50">
-            <div className="flex items-center gap-3 mb-6">
-              <div className="w-2 h-2 bg-amber-500 rounded-full" />
-              <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em]">배당금</h3>
-            </div>
-            <div className="space-y-6 mb-8">
-              <div>
-                <p className="text-3xl font-black text-slate-900 tracking-tighter">{divUSD.toLocaleString(undefined, { maximumFractionDigits: 2 })} <span className="text-[10px] font-bold text-slate-400 ml-1.5 uppercase tracking-widest italic font-mono">USD</span></p>
-                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">Overseas Dividends</p>
+        </motion.div>
+      );
+    }
+
+    return (
+      <div className="space-y-10 animate-in fade-in duration-700">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          {/* Deposit Section */}
+          <div className="bg-white border border-slate-200 rounded-[3rem] p-10 shadow-2xl shadow-slate-200/50 flex flex-col">
+            <div className="flex items-center justify-between mb-10">
+              <div className="flex items-center gap-3">
+                <div className="w-2.5 h-2.5 bg-emerald-500 rounded-full shadow-[0_0_12px_rgba(16,185,129,0.5)]" />
+                <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em]">{t.cash}</h3>
               </div>
-              <div className="pt-4 border-t border-slate-100">
-                <p className="text-3xl font-black text-slate-700 tracking-tighter">{divKRW.toLocaleString()} <span className="text-[10px] font-bold text-slate-400 ml-1.5 uppercase tracking-widest italic font-mono">KRW</span></p>
-                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">Domestic Dividends</p>
+              <button 
+                onClick={() => setIsDepositMode(true)}
+                className="px-8 py-3 bg-slate-900 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-emerald-600 transition-all shadow-xl active:scale-95 flex items-center gap-2"
+              >
+                <Plus className="w-3.5 h-3.5" />
+                {t.deposit}
+              </button>
+            </div>
+            
+            <div className="flex-1 space-y-8 mb-10">
+              <div className="group">
+                <p className="text-4xl font-black text-slate-900 tracking-tighter italic">
+                  {cashKRW.toLocaleString()} 
+                  <span className="text-sm font-bold text-slate-400 ml-2 uppercase italic font-mono">KRW</span>
+                </p>
+                <p className="text-[9px] font-black text-slate-300 uppercase tracking-widest mt-1">Domestic Cash Balance</p>
+              </div>
+              <div className="pt-8 border-t border-slate-50 group">
+                <p className="text-4xl font-black text-slate-900 tracking-tighter italic">
+                  {cashUSD.toLocaleString(undefined, { maximumFractionDigits: 2 })} 
+                  <span className="text-sm font-bold text-slate-400 ml-2 uppercase italic font-mono">USD</span>
+                </p>
+                <p className="text-[9px] font-black text-slate-300 uppercase tracking-widest mt-1">Overseas Cash Balance</p>
               </div>
             </div>
-            <div className="flex gap-2">
-              <button onClick={() => onOpenExchange('dividend')} className="flex-1 py-3 bg-slate-900 text-white rounded-xl text-[9px] font-black tracking-widest uppercase hover:bg-blue-600 transition-all">Exchange</button>
-              <button onClick={() => onOpenHistory('dividend')} className="flex-1 py-3 bg-slate-100 text-slate-600 rounded-xl text-[9px] font-black tracking-widest uppercase hover:bg-slate-200 transition-all">History</button>
+
+            <div className="flex gap-4">
+              <button onClick={() => onOpenExchange('cash')} className="flex-1 py-4 bg-slate-50 border border-slate-100 text-slate-900 rounded-2xl text-[10px] font-black tracking-widest uppercase hover:bg-slate-900 hover:text-white transition-all">{t.exchange}</button>
+              <button onClick={() => onOpenHistory('cash')} className="flex-1 py-4 bg-slate-100 text-slate-500 rounded-2xl text-[10px] font-black tracking-widest uppercase hover:bg-slate-200 hover:text-slate-900 transition-all">{t.history}</button>
+            </div>
+          </div>
+
+          {/* Dividend Section */}
+          <div className="bg-white border border-slate-200 rounded-[3rem] p-10 shadow-2xl shadow-slate-200/50 flex flex-col">
+            <div className="flex items-center gap-3 mb-10">
+              <div className="w-2.5 h-2.5 bg-amber-500 rounded-full shadow-[0_0_12px_rgba(245,158,11,0.5)]" />
+              <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em]">{t.dividend}</h3>
+            </div>
+
+            <div className="flex-1 space-y-8 mb-10">
+              <div className="group">
+                <p className="text-4xl font-black text-slate-900 tracking-tighter italic">
+                  {divKRW.toLocaleString()} 
+                  <span className="text-sm font-bold text-slate-400 ml-2 uppercase italic font-mono">KRW</span>
+                </p>
+                <p className="text-[9px] font-black text-slate-300 uppercase tracking-widest mt-1">Domestic Dividends Total</p>
+              </div>
+              <div className="pt-8 border-t border-slate-50 group">
+                <p className="text-4xl font-black text-slate-900 tracking-tighter italic">
+                  {divUSD.toLocaleString(undefined, { maximumFractionDigits: 2 })} 
+                  <span className="text-sm font-bold text-slate-400 ml-2 uppercase italic font-mono">USD</span>
+                </p>
+                <p className="text-[9px] font-black text-slate-300 uppercase tracking-widest mt-1">Overseas Dividends Total</p>
+              </div>
+            </div>
+
+            <div className="flex gap-4">
+              <button onClick={() => onOpenExchange('dividend')} className="flex-1 py-4 bg-slate-50 border border-slate-100 text-slate-900 rounded-2xl text-[10px] font-black tracking-widest uppercase hover:bg-slate-900 hover:text-white transition-all">{t.exchange}</button>
+              <button onClick={() => onOpenHistory('dividend')} className="flex-1 py-4 bg-slate-100 text-slate-500 rounded-2xl text-[10px] font-black tracking-widest uppercase hover:bg-slate-200 hover:text-slate-900 transition-all">{t.history}</button>
             </div>
           </div>
         </div>
@@ -2234,11 +3152,14 @@ const AssetView = ({
 
   return (
     <div className="space-y-10 animate-in fade-in duration-700">
-      <div className="grid grid-cols-2 gap-8">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         <div className="bg-slate-900 rounded-[3rem] p-10 shadow-2xl relative overflow-hidden group">
           <div className="absolute top-0 right-0 w-32 h-32 bg-blue-600/10 rounded-full blur-3xl -translate-y-10 translate-x-10 group-hover:scale-150 transition-transform duration-1000" />
-          <h3 className="text-[10px] font-black text-slate-500 uppercase tracking-[0.3em] mb-6">Total Portfolio Value</h3>
-          <p className="text-4xl font-black text-white tracking-tighter mb-4">{totalValue.toLocaleString()} <span className="text-sm font-bold text-slate-500 ml-1.5 uppercase tracking-widest italic font-mono">{currency}</span></p>
+          <h3 className="text-[10px] font-black text-slate-500 uppercase tracking-[0.3em] mb-6">{t.totalPortfolio}</h3>
+          <p className="text-4xl sm:text-5xl font-black text-white tracking-tighter mb-4 italic">
+            {totalValue.toLocaleString()} 
+            <span className="text-sm font-bold text-slate-500 ml-2 uppercase tracking-widest italic font-mono">{currency}</span>
+          </p>
           <div className="flex items-center gap-3">
             <span className="px-3 py-1 bg-emerald-500/10 border border-emerald-500/20 rounded-lg text-[10px] font-black text-emerald-500 uppercase tracking-widest">
               {totalValue > 0 ? `+${(totalProfit / totalValue * 100).toFixed(2)}%` : '0.00%'} (+{totalProfit.toLocaleString()})
@@ -2260,15 +3181,20 @@ const AssetView = ({
 
       <div className="bg-white border border-slate-200 rounded-[3rem] overflow-hidden shadow-2xl shadow-slate-200/20">
         <div className="px-10 py-8 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
-            <h3 className="text-xs font-black text-slate-900 uppercase tracking-widest">Active Positions</h3>
-            <button className="text-[10px] font-black text-blue-600 hover:underline uppercase tracking-widest">Trade History</button>
+            <h3 className="text-xs font-black text-slate-900 uppercase tracking-widest">{t.activePositions}</h3>
+            <button 
+              onClick={() => onOpenHistory('cash')}
+              className="text-[10px] font-black text-blue-600 hover:underline uppercase tracking-widest"
+            >
+              {t.history}
+            </button>
         </div>
-        <div className="overflow-x-auto">
-          <table className="w-full text-left">
+        <div className="overflow-x-auto custom-scrollbar">
+          <table className="w-full text-left min-w-[800px]">
             <thead>
               <tr className="border-b border-slate-50">
                 <th className="px-10 py-6 text-[10px] font-black text-slate-400 uppercase tracking-widest">Stock</th>
-                <th className="px-6 py-6 text-[10px] font-black text-slate-400 uppercase tracking-widest">Quantity</th>
+                <th className="px-6 py-6 text-[10px] font-black text-slate-400 uppercase tracking-widest">{t.quantity}</th>
                 <th className="px-6 py-6 text-[10px] font-black text-slate-400 uppercase tracking-widest">Avg Price</th>
                 <th className="px-6 py-6 text-[10px] font-black text-slate-400 uppercase tracking-widest">Current</th>
                 <th className="px-6 py-6 text-[10px] font-black text-slate-400 uppercase tracking-widest text-right">Profit/Loss</th>
