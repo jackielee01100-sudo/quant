@@ -87,7 +87,7 @@ export const TestResultsView = ({ t }: { t: any }) => {
                     marketType === 'domestic' ? "bg-white text-slate-900 shadow-sm" : "text-slate-400 hover:text-slate-600"
                   )}
                 >
-                  KOREA
+                  {t.domestic}
                 </button>
                 <button 
                   onClick={() => setMarketType('overseas')}
@@ -96,7 +96,7 @@ export const TestResultsView = ({ t }: { t: any }) => {
                     marketType === 'overseas' ? "bg-white text-slate-900 shadow-sm" : "text-slate-400 hover:text-slate-600"
                   )}
                 >
-                  USA
+                  {t.overseas}
                 </button>
             </div>
             <div className="relative">

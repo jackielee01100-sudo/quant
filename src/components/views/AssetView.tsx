@@ -138,14 +138,14 @@ export const AssetView = ({
                   {cashKRW.toLocaleString()} 
                   <span className="text-sm font-bold text-slate-400 ml-2 uppercase italic font-mono">KRW</span>
                 </p>
-                <p className="text-[9px] font-black text-slate-300 uppercase tracking-widest mt-1">Domestic Cash Balance</p>
+                <p className="text-[9px] font-black text-slate-300 uppercase tracking-widest mt-1">Korea Cash Balance</p>
               </div>
               <div className="pt-8 border-t border-slate-50 group">
                 <p className="text-4xl font-black text-slate-900 tracking-tighter italic">
                   {cashUSD.toLocaleString(undefined, { maximumFractionDigits: 2 })} 
                   <span className="text-sm font-bold text-slate-400 ml-2 uppercase italic font-mono">USD</span>
                 </p>
-                <p className="text-[9px] font-black text-slate-300 uppercase tracking-widest mt-1">Overseas Cash Balance</p>
+                <p className="text-[9px] font-black text-slate-300 uppercase tracking-widest mt-1">USA Cash Balance</p>
               </div>
             </div>
 
@@ -168,14 +168,14 @@ export const AssetView = ({
                   {divKRW.toLocaleString()} 
                   <span className="text-sm font-bold text-slate-400 ml-2 uppercase italic font-mono">KRW</span>
                 </p>
-                <p className="text-[9px] font-black text-slate-300 uppercase tracking-widest mt-1">Domestic Dividends Total</p>
+                <p className="text-[9px] font-black text-slate-300 uppercase tracking-widest mt-1">Korea Dividends Total</p>
               </div>
               <div className="pt-8 border-t border-slate-50 group">
                 <p className="text-4xl font-black text-slate-900 tracking-tighter italic">
                   {divUSD.toLocaleString(undefined, { maximumFractionDigits: 2 })} 
                   <span className="text-sm font-bold text-slate-400 ml-2 uppercase italic font-mono">USD</span>
                 </p>
-                <p className="text-[9px] font-black text-slate-300 uppercase tracking-widest mt-1">Overseas Dividends Total</p>
+                <p className="text-[9px] font-black text-slate-300 uppercase tracking-widest mt-1">USA Dividends Total</p>
               </div>
             </div>
 
